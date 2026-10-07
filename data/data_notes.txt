@@ -1,0 +1,17 @@
+# Dataset Information and Schema Notes
+Version: 1.0.4-snapshot
+Generated: 2024-07-01
+
+## Currency and Monetary Fields
+- All transactions in orders.csv are recorded in USD unless otherwise specified. Note: All amounts are USD.
+- Refunds do not specify currency directly; each refund amount is denominated in the currency of the associated order.
+- Foreign exchange conversions should reference fx_rates.csv.
+
+## Date Formats
+- Timestamps are captured from regional store terminals.
+- Formats primarily adhere to DD/MM/YYYY or ISO YYYY-MM-DD standard notation.
+
+## Operational Rules
+- Only orders with status 'COMPLETED' represent finalized revenue.
+- Pending or cancelled orders should not be recognized as realized income.
+- Refunds should be matched to their corresponding order_id before applying adjustments.

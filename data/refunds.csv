@@ -1,0 +1,8 @@
+refund_id,order_id,refund_date,refund_amount,reason
+REF-101,ORD-1001,2024-01-25,25.00,Customer return
+REF-102,ORD-1004,2024-02-15,45.00,Wrong item delivered
+REF-103,ORD-1020,2024-05-20,100.00,Customer discount dispute
+REF-104,ORD-1022,2024-05-30,50.00,Damaged packaging
+REF-101,ORD-1001,2024-01-25,25.00,Customer return
+REF-901,ORD-9999,2024-04-10,50.00,Order cancelled prior to sync
+REF-902,ORD-8888,2024-04-15,35.00,System adjustment

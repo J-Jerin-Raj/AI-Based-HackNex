@@ -1,0 +1,74 @@
+[
+  {
+    "id": "Q01",
+    "question": "What is the total number of unique valid completed orders?"
+  },
+  {
+    "id": "Q02",
+    "question": "What is the total revenue from completed USD orders?"
+  },
+  {
+    "id": "Q03",
+    "question": "What is the total revenue for completed EUR orders?"
+  },
+  {
+    "id": "Q04",
+    "question": "What is the total revenue for completed orders where currency is USD, resolving symbol vs currency conflicts?"
+  },
+  {
+    "id": "Q05",
+    "question": "What is the total revenue across all currencies converted to USD?"
+  },
+  {
+    "id": "Q06",
+    "question": "What is the total revenue of completed orders for March 2024?"
+  },
+  {
+    "id": "Q07",
+    "question": "What was the total revenue for May 2024?"
+  },
+  {
+    "id": "Q08",
+    "question": "What is the average customer satisfaction (CSAT) rating for orders in 2024?"
+  },
+  {
+    "id": "Q09",
+    "question": "What is the overall profit margin for completed orders?"
+  },
+  {
+    "id": "Q10",
+    "question": "What is the total revenue by product category?"
+  },
+  {
+    "id": "Q11",
+    "question": "How many unique registered customers have placed at least one completed order?"
+  },
+  {
+    "id": "Q12",
+    "question": "What is the net revenue for completed USD orders after subtracting valid refunds?"
+  },
+  {
+    "id": "Q13",
+    "question": "What is the average order value (AOV) for completed USD orders?"
+  },
+  {
+    "id": "Q14",
+    "question": "Why did sales drop between March and April 2024?"
+  },
+  {
+    "id": "Q15",
+    "question": "Which customer ID generated the highest total spend on completed USD orders, and what was the amount?"
+  },
+  {
+    "id": "Q16",
+    "question": "What was the total order revenue in the first quarter (Q1) of 2025?"
+  },
+  {
+    "id": "Q17",
+    "question": "What is the total refund amount for valid, non-duplicated completed orders?"
+  },
+  {
+    "id": "Q18",
+    "question": "What is the total revenue?"
+  }
+]

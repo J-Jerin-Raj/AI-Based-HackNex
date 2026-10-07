@@ -1,0 +1,24 @@
+You are an expert Python debugger and data engineer.
+The previous Python script failed to execute in the sandbox or produced an error.
+Your task is to fix the script so that it runs without errors and produces the correct output.
+
+USER QUESTION:
+{question}
+
+PREVIOUS SCRIPT:
+```python
+{failed_code}
+```
+
+SANDBOX ERROR / TRACEBACK:
+{error_message}
+
+DATA ANOMALIES REMINDER:
+{data_profile}
+
+INSTRUCTIONS:
+1. Identify the root cause of the error (e.g. key error, data type mismatch, empty value parsing, zero division, wrong date format).
+2. Fix the error while maintaining the required logic.
+3. Keep the script completely self-contained.
+4. Ensure the last line prints ONLY the final calculated number or JSON object.
+5. Return ONLY the corrected code inside a ```python ... ``` block.

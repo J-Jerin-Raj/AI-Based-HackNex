@@ -1,0 +1,24 @@
+customer_id,name,email,signup_date
+CUST-001,Alice Smith,alice.smith@example.com,2023-01-15
+CUST-002,Bob Jones,bob.jones@example.com,2023-02-20
+CUST-003,Charlie Brown,charlie.b@example.com,2023-03-10
+CUST-004,Diana Prince,diana.p@example.com,2023-04-05
+CUST-005,Robert Chen,robert.chen@example.com,2023-05-12
+CUST-006,Fiona Gallagher,fiona.g@example.com,2023-06-18
+CUST-007,George Clark,george.c@example.com,2023-07-22
+CUST-008,Sara Jenkins,sara.jenkins@example.com,2023-08-30
+CUST-009,Ian Malcolm,ian.malcolm@example.com,2023-09-14
+CUST-010,Julia Roberts,julia.r@example.com,2023-10-05
+CUST-011,Kevin Bacon,kevin.b@example.com,2023-10-25
+CUST-012,Laura Croft,laura.croft@example.com,2023-11-02
+CUST-013,Michael Scott,m.scott@example.com,2023-11-15
+CUST-014,Nina Simone,nina.s@example.com,2023-12-01
+CUST-015,Oscar Martinez,oscar.m@example.com,2023-12-10
+CUST-016,Pam Beesly,pam.b@example.com,2023-12-15
+CUST-017,Quinn Fabray,quinn.f@example.com,2024-01-05
+CUST-018,Ryan Howard,ryan.h@example.com,2024-01-12
+CUST-019,Stanley Hudson,stanley.h@example.com,2024-01-18
+CUST-020,Toby Flenderson,toby.f@example.com,2024-01-25
+CUST-002,Bob Jones,bob.jones@example.com,2023-02-20
+CUST-005,  Robert Chen  ,robert.chen@example.com,2023-05-12
+CUST-021,Sarah Jenkins,sara.jenkins@example.com,2024-02-01

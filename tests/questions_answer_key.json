@@ -1,0 +1,221 @@
+[
+  {
+    "id": "Q01",
+    "question": "What is the total number of unique valid completed orders?",
+    "expected_verdict": "answerable",
+    "expected_value": 25,
+    "alt_values": {
+      "including_orphan_customers": 26
+    },
+    "assumptions": [
+      "Deduplicates exact duplicate rows and messy status whitespace/casing",
+      "Excludes orders with missing amounts, missing currencies, or cancelled/pending status",
+      "Excludes orders belonging to nonexistent customer IDs"
+    ],
+    "reason": "Requires deduplicating duplicate rows, normalizing status whitespace/case (' COMPLETED '), and excluding rows with null amounts or orphan customer IDs."
+  },
+  {
+    "id": "Q02",
+    "question": "What is the total revenue from completed USD orders?",
+    "expected_verdict": "answerable",
+    "expected_value": 12313.21,
+    "alt_values": {
+      "symbol_authoritative": 12213.21
+    },
+    "assumptions": [
+      "Assumes currency column takes precedence when currency symbol contradicts currency column",
+      "Deduplicates rows and excludes blank amounts and cancelled/pending orders"
+    ],
+    "reason": "Requires parsing currency amounts (stripping '$', '\u20ac', commas), deduplicating rows, and filtering for completed USD transactions."
+  },
+  {
+    "id": "Q03",
+    "question": "What is the total revenue for completed EUR orders?",
+    "expected_verdict": "answerable_with_assumption",
+    "expected_value": 700.0,
+    "alt_values": {
+      "symbol_authoritative": 800.0,
+      "unambiguous_only": 350.0
+    },
+    "assumptions": [
+      "Assumes currency column is authoritative over conflicting currency symbols (e.g., ORD-1030 has amount '$350.00' but currency 'EUR')"
+    ],
+    "reason": "Row ORD-1030 contains a conflicting dollar symbol '$350.00' with currency 'EUR'. Answer is answerable under the assumption that the currency column is authoritative."
+  },
+  {
+    "id": "Q04",
+    "question": "What is the total revenue for completed orders where currency is USD, resolving symbol vs currency conflicts?",
+    "expected_verdict": "answerable_with_assumption",
+    "expected_value": 12313.21,
+    "alt_values": {
+      "symbol_authoritative": 12213.21
+    },
+    "assumptions": [
+      "Assumes currency column takes precedence over symbol in amount string (including ORD-1031 which has '\u20ac450.00' but currency 'USD')"
+    ],
+    "reason": "Row ORD-1031 has currency 'USD' but amount '\u20ac450.00'. Resolving requires explicitly declaring the assumption that the currency column takes precedence."
+  },
+  {
+    "id": "Q05",
+    "question": "What is the total revenue across all currencies converted to USD?",
+    "expected_verdict": "cannot_determine",
+    "expected_value": null,
+    "alt_values": {},
+    "assumptions": [],
+    "reason": "The orders table contains transactions in GBP (ORD-1034, ORD-1035), but fx_rates.csv does not contain an exchange rate for GBP."
+  },
+  {
+    "id": "Q06",
+    "question": "What is the total revenue of completed orders for March 2024?",
+    "expected_verdict": "answerable_with_assumption",
+    "expected_value": 2343.21,
+    "alt_values": {
+      "MM_DD_YYYY": 1102.47
+    },
+    "assumptions": [
+      "Assumes ambiguous date strings (such as 05/03/2024 and 03/05/2024) follow the DD/MM/YYYY convention per regional store notes"
+    ],
+    "reason": "Orders contains ambiguous dates where DD/MM and MM/DD interpretations diverge into different months. Under DD/MM/YYYY, March total is 2343.21; under MM/DD/YYYY, March total is 1102.47."
+  },
+  {
+    "id": "Q07",
+    "question": "What was the total revenue for May 2024?",
+    "expected_verdict": "contradiction",
+    "expected_value": {
+      "orders_total": 4000.0,
+      "summary_total": 4600.0,
+      "discrepancy_pct": 15.0
+    },
+    "alt_values": {
+      "orders_only": 4000.0,
+      "summary_only": 4600.0
+    },
+    "assumptions": [
+      "Flags cross-table contradiction between orders.csv and monthly_summary.csv"
+    ],
+    "reason": "The orders table supports a May 2024 revenue of 4000.00, whereas monthly_summary.csv reports 4600.00 (exactly 15% higher)."
+  },
+  {
+    "id": "Q08",
+    "question": "What is the average customer satisfaction (CSAT) rating for orders in 2024?",
+    "expected_verdict": "cannot_determine",
+    "expected_value": null,
+    "alt_values": {},
+    "assumptions": [],
+    "reason": "No customer satisfaction scores, review tables, or rating columns exist in the dataset."
+  },
+  {
+    "id": "Q09",
+    "question": "What is the overall profit margin for completed orders?",
+    "expected_verdict": "cannot_determine",
+    "expected_value": null,
+    "alt_values": {},
+    "assumptions": [],
+    "reason": "The dataset contains top-line revenue but no cost of goods sold (COGS), purchase costs, or margin information."
+  },
+  {
+    "id": "Q10",
+    "question": "What is the total revenue by product category?",
+    "expected_verdict": "cannot_determine",
+    "expected_value": null,
+    "alt_values": {},
+    "assumptions": [],
+    "reason": "Neither product category nor item-level line item metadata exists in orders.csv or supporting tables."
+  },
+  {
+    "id": "Q11",
+    "question": "How many unique registered customers have placed at least one completed order?",
+    "expected_verdict": "answerable",
+    "expected_value": 19,
+    "alt_values": {
+      "including_orphan_customers": 20
+    },
+    "assumptions": [
+      "Excludes orphaned customer IDs (e.g. CUST-999) not present in customers.csv",
+      "Deduplicates customers with messy whitespace or multiple registrations"
+    ],
+    "reason": "Requires deduplicating customer IDs and verifying membership against registered customers in customers.csv."
+  },
+  {
+    "id": "Q12",
+    "question": "What is the net revenue for completed USD orders after subtracting valid refunds?",
+    "expected_verdict": "answerable_with_assumption",
+    "expected_value": 12093.21,
+    "alt_values": {
+      "including_duplicate_refunds": 12068.21
+    },
+    "assumptions": [
+      "Assumes refunds inherit the currency of the associated order per data_notes.txt",
+      "Deduplicates duplicate refund entries (REF-101) and excludes refunds referencing nonexistent orders (REF-901, REF-902)"
+    ],
+    "reason": "Refunds table has no currency column. Answering requires adopting the assumption in data_notes.txt and pruning orphan/duplicate refunds."
+  },
+  {
+    "id": "Q13",
+    "question": "What is the average order value (AOV) for completed USD orders?",
+    "expected_verdict": "answerable",
+    "expected_value": 615.66,
+    "alt_values": {},
+    "assumptions": [
+      "Calculated as total completed USD revenue divided by number of unique completed USD orders",
+      "Assumes currency column takes precedence for symbol conflict rows"
+    ],
+    "reason": "Requires computing the quotient of deduplicated completed USD revenue and completed USD order count."
+  },
+  {
+    "id": "Q14",
+    "question": "Why did sales drop between March and April 2024?",
+    "expected_verdict": "cannot_determine",
+    "expected_value": null,
+    "alt_values": {},
+    "assumptions": [],
+    "reason": "The dataset contains transactional event records but no causal, attribution, web traffic, or marketing campaign data to explain why sales changed."
+  },
+  {
+    "id": "Q15",
+    "question": "Which customer ID generated the highest total spend on completed USD orders, and what was the amount?",
+    "expected_verdict": "answerable",
+    "expected_value": {
+      "customer_id": "CUST-003",
+      "total_spend": 2343.21
+    },
+    "alt_values": {},
+    "assumptions": [
+      "Aggregates deduplicated completed USD orders per registered customer ID"
+    ],
+    "reason": "Requires grouping valid completed USD orders by customer_id and finding the argmax."
+  },
+  {
+    "id": "Q16",
+    "question": "What was the total order revenue in the first quarter (Q1) of 2025?",
+    "expected_verdict": "cannot_determine",
+    "expected_value": null,
+    "alt_values": {},
+    "assumptions": [],
+    "reason": "The dataset only covers orders placed in calendar year 2024. No records exist for 2025."
+  },
+  {
+    "id": "Q17",
+    "question": "What is the total refund amount for valid, non-duplicated completed orders?",
+    "expected_verdict": "answerable",
+    "expected_value": 220.0,
+    "alt_values": {
+      "including_duplicates": 245.0,
+      "including_nonexistent_orders": 305.0
+    },
+    "assumptions": [
+      "Deduplicates identical refund rows (REF-101)",
+      "Excludes refunds referencing invalid or nonexistent order IDs (REF-901, REF-902)"
+    ],
+    "reason": "Requires cross-checking refunds against valid orders and eliminating duplicate submissions."
+  },
+  {
+    "id": "Q18",
+    "question": "What is the total revenue?",
+    "expected_verdict": "ambiguous",
+    "expected_value": null,
+    "alt_values": {},
+    "assumptions": [],
+    "reason": "The question is underspecified: it does not specify currency (orders are denominated in USD, EUR, GBP), order status (all orders vs completed only), timeframe, or whether refunds should be deducted."
+  }
+]

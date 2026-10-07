@@ -1,0 +1,5 @@
+# Sample questions to test the pipeline
+What was the total revenue for May 2024?
+What is the profit margin for completed orders?
+What is the total revenue across all currencies converted to USD?
+What is the total revenue?
