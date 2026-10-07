@@ -207,6 +207,7 @@ class HostedOpenAIClient(BaseLLMClient):
             or (not base_url and DEFAULT_PROVIDER == "gemini")
         )
 
+        self.is_gemini = is_gemini
         if is_gemini:
             self.model = model or DEFAULT_GEMINI_MODEL
             self.api_key = api_key or DEFAULT_GEMINI_KEY or DEFAULT_OPENAI_KEY
@@ -257,7 +258,7 @@ class HostedOpenAIClient(BaseLLMClient):
             "temperature": temperature,
             "max_tokens": max_tokens
         }
-        if seed is not None:
+        if seed is not None and not getattr(self, "is_gemini", False):
             payload["seed"] = seed
 
         resp = requests.post(

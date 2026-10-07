@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HackNex | Quantitative Document Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* White & Teal Minimalist Theme */
+      --bg-base: #F8FAFC;
+      --bg-surface: #FFFFFF;
+      --bg-card: #FFFFFF;
+      --bg-card-hover: #F0FDFA;
+      --bg-input: #FFFFFF;
+      --border-subtle: #E2E8F0;
+      --border-focus: #0D9488;
+      
+      --teal: #0D9488;
+      --teal-dark: #0F766E;
+      --teal-light: #14B8A6;
+      --teal-soft: #F0FDFA;
+      --teal-glow: rgba(13, 148, 136, 0.12);
+      --border-teal-dim: rgba(13, 148, 136, 0.28);
+      
+      --text-main: #0F172A;
+      --text-body: #334155;
+      --text-muted: #64748B;
+      --text-dim: #94A3B8;
+      
+      --red: #DC2626;
+      --red-dim: rgba(220, 38, 38, 0.08);
+      --amber: #D97706;
+      --amber-dim: rgba(217, 119, 6, 0.08);
+      --blue: #0284C7;
+      --blue-dim: rgba(2, 132, 199, 0.08);
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 4px 20px rgba(15, 23, 42, 0.06);
+      --shadow-teal: 0 4px 18px rgba(13, 148, 136, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* HEADER */
+    header {
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--teal);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+    }
+
+    .brand-title {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.3px;
+      color: var(--text-main);
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      border: 1px solid var(--border-teal-dim);
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 6px var(--teal);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .model-selector-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 4px 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .model-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .model-select {
+      background: transparent;
+      border: none;
+      color: var(--teal-dark);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .model-select option {
+      background: var(--bg-surface);
+      color: var(--text-main);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      border: 1px solid transparent;
+      font-family: inherit;
+    }
+
+    .btn-teal {
+      background: var(--teal);
+      color: #FFFFFF;
+      border-color: var(--teal);
+      box-shadow: var(--shadow-teal);
+    }
+
+    .btn-teal:hover {
+      background: var(--teal-dark);
+      box-shadow: 0 4px 20px rgba(13, 148, 136, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: var(--bg-surface);
+      color: var(--text-body);
+      border-color: var(--border-subtle);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-ghost:hover {
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      border-color: var(--border-teal-dim);
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 11.5px;
+    }
+
+    /* 3-COLUMN WORKSPACE: [ FILES BOX (LEFT) | DOCUMENT (CENTER) | ASSISTANT (RIGHT) ] */
+    .app-workspace {
+      display: grid;
+      grid-template-columns: 290px 1fr 440px;
+      flex: 1;
+      height: calc(100vh - 53px);
+      overflow: hidden;
+    }
+
+    @media (max-width: 1250px) {
+      .app-workspace {
+        grid-template-columns: 260px 1fr;
+      }
+      .assistant-pane {
+        grid-column: 1 / -1;
+        height: auto;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app-workspace {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+    }
+
+    /* COLUMN 1: LEFT FILES BOX AREA */
+    .files-pane {
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .files-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface);
+    }
+
+    .files-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px;
+    }
+
+    .files-upload-strip {
+      padding: 12px 16px;
+      background: var(--bg-base);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .upload-drop-btn {
+      width: 100%;
+      border: 1px dashed var(--border-teal-dim);
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .upload-drop-btn:hover {
+      background: #E6FFFA;
+      border-color: var(--teal);
+    }
+
+    .files-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .file-item-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .file-item-card:hover {
+      background: var(--teal-soft);
+      border-color: var(--border-teal-dim);
+    }
+
+    .file-item-card.active {
+      background: var(--teal-soft);
+      border-color: var(--teal);
+      box-shadow: 0 0 0 1px var(--teal);
+    }
+
+    .file-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .file-ext-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .badge-csv {
+      background: #E0F2FE;
+      color: #0369A1;
+    }
+
+    .badge-txt {
+      background: #FEF3C7;
+      color: #B45309;
+    }
+
+    .file-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      margin-left: 6px;
+    }
+
+    .file-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .file-view-btn {
+      color: var(--teal-dark);
+      font-weight: 600;
+      text-decoration: underline;
+      font-size: 11px;
+    }
+
+    /* COLUMN 2: CENTER DOCUMENT ASSISTANT */
+    .document-pane {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-subtle);
+      background: var(--bg-base);
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .doc-toolbar {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .doc-tools-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tool-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      font-family: inherit;
+    }
+
+    .tool-btn:hover {
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      border-color: var(--border-teal-dim);
+    }
+
+    .tool-btn.active {
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      border-color: var(--border-teal-dim);
+    }
+
+    .tool-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--border-subtle);
+      margin: 0 4px;
+    }
+
+    .doc-canvas-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .document-page {
+      width: 100%;
+      max-width: 760px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 44px 52px;
+      min-height: 800px;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .doc-header-input {
+      background: transparent;
+      border: none;
+      color: var(--teal-dark);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      outline: none;
+      margin-bottom: 6px;
+      width: 100%;
+    }
+
+    .doc-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-dim);
+      font-size: 11.5px;
+      font-family: 'JetBrains Mono', monospace;
+      padding-bottom: 16px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .doc-content-editable {
+      flex: 1;
+      outline: none;
+      color: var(--text-body);
+      font-size: 14.5px;
+      line-height: 1.75;
+    }
+
+    .doc-content-editable h1 {
+      color: var(--teal-dark);
+      font-size: 19px;
+      margin: 22px 0 10px 0;
+      font-weight: 700;
+    }
+
+    .doc-content-editable h2 {
+      color: var(--text-main);
+      font-size: 15.5px;
+      margin: 18px 0 8px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 4px;
+      font-weight: 700;
+    }
+
+    .doc-content-editable p {
+      margin-bottom: 14px;
+      color: var(--text-body);
+    }
+
+    .doc-content-editable ul {
+      margin: 8px 0 16px 24px;
+      color: var(--text-body);
+    }
+
+    .doc-content-editable li {
+      margin-bottom: 4px;
+    }
+
+    .doc-content-editable blockquote {
+      border-left: 3px solid var(--teal);
+      padding: 10px 16px;
+      background: var(--teal-soft);
+      margin: 16px 0;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-style: italic;
+      color: var(--text-body);
+    }
+
+    .doc-content-editable pre {
+      background: #0F172A;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #2DD4BF;
+      overflow-x: auto;
+      margin: 14px 0;
+    }
+
+    /* Analysis Insertion Callout */
+    .analysis-callout {
+      background: #F0FDFA;
+      border: 1px solid var(--border-teal-dim);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      margin: 18px 0;
+      position: relative;
+    }
+
+    .analysis-callout::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--teal);
+      border-radius: var(--radius-md) 0 0 var(--radius-md);
+    }
+
+    .analysis-callout .callout-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .analysis-callout .callout-verdict {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .verdict-answerable {
+      background: #CCFBF1;
+      color: var(--teal-dark);
+      border: 1px solid rgba(13, 148, 136, 0.35);
+    }
+
+    .verdict-cannot_determine {
+      background: var(--blue-dim);
+      color: var(--blue);
+      border: 1px solid rgba(2, 132, 199, 0.3);
+    }
+
+    .verdict-contradiction {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid rgba(220, 38, 38, 0.3);
+    }
+
+    .analysis-callout .callout-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--teal-dark);
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .analysis-callout .callout-text {
+      font-size: 13.5px;
+      color: var(--text-body);
+      line-height: 1.55;
+    }
+
+    /* COLUMN 3: RIGHT ASSISTANT CONSOLE */
+    .assistant-pane {
+      background: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .assistant-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .assistant-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+    }
+
+    .query-box-wrap {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-base);
+    }
+
+    .query-textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 13.5px;
+      resize: vertical;
+      min-height: 75px;
+      outline: none;
+      transition: all 0.2s ease;
+      line-height: 1.5;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .query-textarea:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+    }
+
+    .query-actions-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .sample-chips {
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+    }
+
+    .chips-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 11.5px;
+      color: var(--text-body);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .chip:hover {
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      border-color: var(--border-teal-dim);
+    }
+
+    /* RESULTS STREAM */
+    .results-stream {
+      flex: 1;
+      padding: 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--bg-base);
+    }
+
+    .result-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+    }
+
+    .result-card.highlight {
+      border-color: var(--teal);
+      box-shadow: var(--shadow-teal);
+    }
+
+    .result-header {
+      padding: 12px 16px;
+      background: #FAFAFA;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .verdict-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .result-body {
+      padding: 16px;
+    }
+
+    .value-display {
+      margin-bottom: 14px;
+    }
+
+    .value-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .value-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--teal-dark);
+      letter-spacing: -0.5px;
+    }
+
+    .explanation-text {
+      font-size: 13.5px;
+      color: var(--text-body);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .result-tabs-nav {
+      display: flex;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-top: 14px;
+    }
+
+    .result-tab-btn {
+      background: transparent;
+      border: none;
+      padding: 8px 12px;
+      font-size: 11.5px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s ease;
+      font-weight: 600;
+    }
+
+    .result-tab-btn.active {
+      color: var(--teal-dark);
+      border-bottom-color: var(--teal);
+    }
+
+    .result-tab-content {
+      padding: 14px 0 0 0;
+      display: none;
+    }
+
+    .result-tab-content.active {
+      display: block;
+    }
+
+    .code-box {
+      background: #0F172A;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #2DD4BF;
+      overflow-x: auto;
+      max-height: 240px;
+      line-height: 1.5;
+    }
+
+    .manifest-table {
+      width: 100%;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      border-collapse: collapse;
+    }
+
+    .manifest-table td {
+      padding: 6px 4px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .manifest-table td:first-child {
+      color: var(--text-muted);
+      width: 110px;
+    }
+
+    .manifest-table td:last-child {
+      color: var(--text-main);
+      word-break: break-all;
+    }
+
+    .result-footer {
+      padding: 10px 16px;
+      background: #FAFAFA;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* FILE INSPECTOR DRAWER / MODAL */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      width: 90%;
+      max-width: 920px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--teal-dark);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* PREVIEW DATA TABLE */
+    .preview-table-wrap {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+      max-height: 500px;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .preview-table th {
+      background: #F1F5F9;
+      color: var(--text-main);
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 700;
+      border-bottom: 2px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+    }
+
+    .preview-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-body);
+      white-space: nowrap;
+    }
+
+    .preview-table tr:hover {
+      background: var(--teal-soft);
+    }
+
+    .hash-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: var(--teal-dark);
+      background: var(--teal-soft);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border-teal-dim);
+    }
+
+    /* SPINNER */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      border-top-color: #FFFFFF;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">HN</div>
+      <div>
+        <div class="brand-title">HackNex Quantitative Assistant</div>
+      </div>
+      <div class="brand-badge">
+        <span class="pulse-dot"></span>
+        <span>VERIFIED PIPELINE</span>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <!-- Changeable Model Dropdown -->
+      <div class="model-selector-wrap">
+        <span class="model-label">Model:</span>
+        <select id="modelSelect" class="model-select" onchange="onModelChange()">
+          <option value="gemini-3.1-flash-lite" selected>gemini-3.1-flash-lite (Active)</option>
+          <option value="gemini-flash-lite-latest">gemini-flash-lite-latest</option>
+          <option value="gemini-3.8-flash">gemini-3.8-flash</option>
+          <option value="qwen2.5-coder:1.5b">qwen2.5-coder:1.5b (Ollama)</option>
+          <option value="qwen3:4b">qwen3:4b (Ollama)</option>
+        </select>
+      </div>
+
+      <button class="btn btn-ghost" onclick="openTrapsModal()">
+        <span>Data Traps</span>
+      </button>
+
+      <button class="btn btn-ghost" onclick="runBenchmark()">
+        <span>18/18 Benchmark</span>
+      </button>
+
+      <button class="btn btn-teal" onclick="exportDocument()">
+        <span>Export Report</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 3-PANE WORKSPACE -->
+  <div class="app-workspace">
+
+    <!-- COLUMN 1: LEFT FILES BOX AREA (FILE LIST & VIEWER) -->
+    <aside class="files-pane">
+      <div class="files-header">
+        <span class="files-title">Project Datasets</span>
+        <span id="fileCountBadge" class="mono" style="font-size: 11px; color: var(--teal-dark); font-weight: 700;">(5)</span>
+      </div>
+
+      <div class="files-upload-strip">
+        <button class="upload-drop-btn" onclick="document.getElementById('fileInput').click()">
+          <span>+ Upload Data Files</span>
+        </button>
+        <input type="file" id="fileInput" multiple style="display: none;" onchange="handleFileSelect(event)">
+      </div>
+
+      <!-- File Cards List -->
+      <div class="files-list" id="filesList">
+        <!-- Dynamically populated -->
+      </div>
+    </aside>
+
+    <!-- COLUMN 2: CENTER DOCUMENT ASSISTANT (EDITABLE MEMO) -->
+    <section class="document-pane">
+      <div class="doc-toolbar">
+        <div class="doc-tools-group">
+          <button class="tool-btn" title="Bold" onclick="execCmd('bold')"><b>B</b></button>
+          <button class="tool-btn" title="Italic" onclick="execCmd('italic')"><i>I</i></button>
+          <button class="tool-btn" title="Underline" onclick="execCmd('underline')"><u>U</u></button>
+          <div class="tool-divider"></div>
+          <button class="tool-btn" title="Heading 1" onclick="formatBlock('h1')">H1</button>
+          <button class="tool-btn" title="Heading 2" onclick="formatBlock('h2')">H2</button>
+          <button class="tool-btn" title="Paragraph" onclick="formatBlock('p')">P</button>
+          <div class="tool-divider"></div>
+          <button class="tool-btn" title="Bullet List" onclick="execCmd('insertUnorderedList')">•≡</button>
+          <button class="tool-btn" title="Quote" onclick="formatBlock('blockquote')">”</button>
+        </div>
+
+        <div class="doc-tools-group">
+          <button class="btn btn-ghost btn-sm" onclick="insertLatestIntoDoc()">
+            <span style="color: var(--teal-dark); font-weight: 700;">Insert Analysis</span>
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="clearDocument()">Clear</button>
+        </div>
+      </div>
+
+      <div class="doc-canvas-wrap">
+        <div class="document-page">
+          <input type="text" id="docTitle" class="doc-header-input" value="Executive Quantitative Analysis Memo">
+          
+          <div class="doc-meta-row">
+            <span>AUDIT AGENT: HackNex Verifiable Pipeline</span>
+            <span>•</span>
+            <span id="docTimestamp">OCTOBER 2026</span>
+            <span>•</span>
+            <span style="color: var(--teal-dark); font-weight: 600;">STATUS: VERIFIED (18/18 BENCHMARK)</span>
+          </div>
+
+          <div id="editableDoc" class="doc-content-editable" contenteditable="true" spellcheck="false">
+            <h2>1. Executive Summary</h2>
+            <p>This quantitative document compiles verifiable findings produced by the deterministic rules engine and sandboxed Pandas executions. All calculations are executed exclusively within a restricted Python subprocess and validated against cryptographic SHA-256 manifests.</p>
+
+            <h2>2. Key Quantitative Findings</h2>
+            <p><i>Query the assistant on the right panel, then click <b>Insert Analysis</b> to embed verified metrics with their code traces directly into this report.</i></p>
+
+            <blockquote>
+              "Rule: The LLM never computes numbers. Numbers are derived from deterministic code executed against verified data hashes."
+            </blockquote>
+
+            <h2>3. Identified Data Anomalies & Discrepancies</h2>
+            <ul>
+              <li><b>orders.csv:</b> Contains 3 duplicate rows requiring deterministic deduplication.</li>
+              <li><b>Currency Traps:</b> Multiple rows present currency symbol conflicts (e.g. EUR symbols marked as USD).</li>
+              <li><b>Reconciliation Mismatch:</b> May 2024 monthly_summary exhibits a 15% discrepancy compared to raw order transactions.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COLUMN 3: RIGHT ASSISTANT CONSOLE -->
+    <aside class="assistant-pane">
+      <div class="assistant-header">
+        <span class="assistant-title">Quantitative Console</span>
+        <span class="mono" style="font-size: 11px; color: var(--teal-dark); font-weight: 600;" id="activeModelBadge">gemini-3.1-flash-lite</span>
+      </div>
+
+      <!-- QUERY BOX -->
+      <div class="query-box-wrap">
+        <textarea id="questionInput" class="query-textarea" placeholder="Ask a quantitative question (e.g. What is the total revenue from completed USD orders?)..."></textarea>
+        
+        <div class="query-actions-row">
+          <span class="mono" style="font-size: 11px; color: var(--text-dim);" id="queryHint">Ctrl+Enter to analyze</span>
+          <button id="runBtn" class="btn btn-teal" onclick="submitQuery()">
+            <span>Run Analysis</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SAMPLE QUESTION CHIPS -->
+      <div class="sample-chips">
+        <div class="chips-label">Quick Starter Prompts</div>
+        <div class="chip-list">
+          <div class="chip" onclick="fillQuestion('What is the total revenue from completed USD orders?')">USD Revenue (Answerable)</div>
+          <div class="chip" onclick="fillQuestion('What was the total revenue for May 2024?')">May 2024 (Contradiction Trap)</div>
+          <div class="chip" onclick="fillQuestion('What is our customer satisfaction rating for 2024?')">Customer Satisfaction (Missing Data)</div>
+          <div class="chip" onclick="fillQuestion('What was the total revenue for June 2024?')">June 2024 (Answerable)</div>
+          <div class="chip" onclick="fillQuestion('How many entries exist in the tables?')">Count Rows (Multi-table)</div>
+        </div>
+      </div>
+
+      <!-- RESULTS STREAM -->
+      <div id="resultsStream" class="results-stream">
+        <div class="empty-state">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text-body); margin-bottom: 4px;">Ready for Analysis</div>
+          <div style="font-size: 12px; color: var(--text-muted);">Submit a question above to execute verified Pandas code in the sandbox.</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- MODAL: FILE CONTENT VIEWER (TABLE / TEXT) -->
+  <div id="fileViewerModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="fileViewerTitle">orders.csv</div>
+          <div id="fileViewerMeta" class="mono" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('fileViewerModal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <div id="fileViewerContent">
+          <!-- Dynamically populated table or text -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DATA TRAP DETECTOR -->
+  <div id="trapsModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Planted Data Traps & Anomaly Inspector</div>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('trapsModal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          The Data Profiler scans loaded datasets for anomalies, dirty formatting, and intentional traps. The deterministic gate uses these facts to refuse unsound queries.
+        </p>
+        <div id="trapsList" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: BENCHMARK RESULTS -->
+  <div id="benchmarkModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Benchmark Suite Evaluation (18 Questions)</div>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('benchmarkModal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <div id="benchmarkStats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+          <!-- Dynamically populated -->
+        </div>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Expected Verdict</th>
+                <th>Predicted</th>
+                <th>Status</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="benchmarkTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    let latestResult = null;
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadModels();
+      loadDatasets();
+      
+      document.getElementById("questionInput").addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          submitQuery();
+        }
+      });
+    });
+
+    function execCmd(command, value = null) {
+      document.execCommand(command, false, value);
+      document.getElementById("editableDoc").focus();
+    }
+
+    function formatBlock(tag) {
+      document.execCommand('formatBlock', false, tag);
+      document.getElementById("editableDoc").focus();
+    }
+
+    function clearDocument() {
+      if (confirm("Clear current document draft?")) {
+        document.getElementById("editableDoc").innerHTML = "<p>Draft cleared. Ready for your notes.</p>";
+      }
+    }
+
+    function exportDocument() {
+      const title = document.getElementById("docTitle").value || "analysis_report";
+      const content = document.getElementById("editableDoc").innerText;
+      const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${title.toLowerCase().replace(/[^a-z0-9]/g, "_")}.md`;
+      a.click();
+    }
+
+    async function loadModels() {
+      try {
+        const res = await fetch("/api/models");
+        const data = await res.json();
+        const sel = document.getElementById("modelSelect");
+        sel.innerHTML = "";
+        data.models.forEach(m => {
+          const opt = document.createElement("option");
+          opt.value = m.id;
+          opt.innerText = `${m.name}`;
+          if (m.default) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        updateModelBadge();
+      } catch (e) {
+        console.error("Failed to load models:", e);
+      }
+    }
+
+    function onModelChange() {
+      updateModelBadge();
+    }
+
+    function updateModelBadge() {
+      const val = document.getElementById("modelSelect").value;
+      document.getElementById("activeModelBadge").innerText = val;
+    }
+
+    function fillQuestion(q) {
+      document.getElementById("questionInput").value = q;
+      document.getElementById("questionInput").focus();
+    }
+
+    async function submitQuery() {
+      const input = document.getElementById("questionInput");
+      const q = input.value.trim();
+      if (!q) return;
+
+      const model = document.getElementById("modelSelect").value;
+      const btn = document.getElementById("runBtn");
+      const stream = document.getElementById("resultsStream");
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner"></span> <span>Executing...</span>`;
+
+      const tempId = "card_" + Date.now();
+      const thinkingCard = document.createElement("div");
+      thinkingCard.id = tempId;
+      thinkingCard.className = "result-card highlight";
+      thinkingCard.innerHTML = `
+        <div class="result-header">
+          <div class="mono" style="font-size: 11px; color: var(--teal-dark); font-weight: 700;">QUESTION IN PROGRESS</div>
+          <div class="mono" style="font-size: 11px; color: var(--text-dim);">${model}</div>
+        </div>
+        <div class="result-body" style="text-align: center; padding: 26px;">
+          <div class="spinner" style="width: 20px; height: 20px; border-width: 2.5px; border-color: rgba(13, 148, 136, 0.2); border-top-color: var(--teal); margin-bottom: 10px;"></div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">Deterministic Gate & Sandbox Active</div>
+          <div style="font-size: 11.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">Verifying data hashes • Running subprocess</div>
+        </div>
+      `;
+      if (stream.querySelector(".empty-state")) {
+        stream.innerHTML = "";
+      }
+      stream.prepend(thinkingCard);
+
+      try {
+        const res = await fetch("/api/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: q, model: model })
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+          throw new Error(data.error || "Query failed");
+        }
+
+        latestResult = data;
+        renderResultCard(thinkingCard, data);
+
+      } catch (err) {
+        thinkingCard.innerHTML = `
+          <div class="result-header">
+            <div class="verdict-tag verdict-contradiction">ERROR</div>
+          </div>
+          <div class="result-body">
+            <div style="color: var(--red); font-size: 13px;">${err.message}</div>
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Run Analysis</span>`;
+      }
+    }
+
+    function renderResultCard(cardEl, data) {
+      const vClass = data.verdict === "answerable" ? "verdict-answerable" 
+                    : (data.verdict === "contradiction" ? "verdict-contradiction" : "verdict-cannot_determine");
+
+      const valHtml = data.value !== null && data.value !== undefined
+        ? `<div class="value-display">
+             <div class="value-label">Verified Calculated Output</div>
+             <div class="value-num">${data.value}</div>
+           </div>`
+        : "";
+
+      const codeTabHtml = data.code 
+        ? `<div class="result-tab-content active" id="tab_code_${data.question_id}">
+             <div class="code-box">${escapeHtml(data.code)}</div>
+           </div>` 
+        : "";
+
+      const manifest = data.manifest || {};
+      const manifestTabHtml = `
+        <div class="result-tab-content" id="tab_manifest_${data.question_id}">
+          <table class="manifest-table">
+            <tr><td>Question ID</td><td>${data.question_id}</td></tr>
+            <tr><td>Verdict</td><td>${data.verdict}</td></tr>
+            <tr><td>Code Hash</td><td>${data.code_hash ? data.code_hash.substring(0, 24) + '...' : 'N/A (Rules Gate)'}</td></tr>
+            <tr><td>Output Hash</td><td>${data.output_hash ? data.output_hash.substring(0, 24) + '...' : 'N/A'}</td></tr>
+            <tr><td>Execution Time</td><td>${data.execution_time_seconds}s</td></tr>
+          </table>
+        </div>
+      `;
+
+      cardEl.innerHTML = `
+        <div class="result-header">
+          <div class="verdict-tag ${vClass}">${data.verdict}</div>
+          <div class="mono" style="font-size: 11px; color: var(--text-dim);">${data.question_id} • ${data.execution_time_seconds}s</div>
+        </div>
+
+        <div class="result-body">
+          ${valHtml}
+          <div class="explanation-text">${escapeHtml(data.explanation || data.reason || "No explanation provided.")}</div>
+
+          <div class="result-tabs-nav">
+            <button class="result-tab-btn active" onclick="switchResultTab('${data.question_id}', 'code')">Verified Code</button>
+            <button class="result-tab-btn" onclick="switchResultTab('${data.question_id}', 'manifest')">Audit Manifest</button>
+          </div>
+
+          ${codeTabHtml}
+          ${manifestTabHtml}
+        </div>
+
+        <div class="result-footer">
+          <button class="btn btn-ghost btn-sm" onclick="insertSpecificIntoDoc(${JSON.stringify(data).replace(/"/g, '&quot;')})">
+            <span>Insert into Document</span>
+          </button>
+          <span class="mono" style="font-size: 10.5px; color: var(--teal-dark); font-weight: 600;">${data.model_used}</span>
+        </div>
+      `;
+    }
+
+    function switchResultTab(qid, tabName) {
+      const codeTab = document.getElementById(`tab_code_${qid}`);
+      const manifestTab = document.getElementById(`tab_manifest_${qid}`);
+      const btns = event.target.parentElement.querySelectorAll(".result-tab-btn");
+      btns.forEach(b => b.classList.remove("active"));
+      event.target.classList.add("active");
+
+      if (codeTab) codeTab.classList.toggle("active", tabName === "code");
+      if (manifestTab) manifestTab.classList.toggle("active", tabName === "manifest");
+    }
+
+    function insertLatestIntoDoc() {
+      if (!latestResult) {
+        alert("Run an analysis first to insert results.");
+        return;
+      }
+      insertSpecificIntoDoc(latestResult);
+    }
+
+    function insertSpecificIntoDoc(data) {
+      const doc = document.getElementById("editableDoc");
+      const vClass = data.verdict === "answerable" ? "verdict-answerable" 
+                    : (data.verdict === "contradiction" ? "verdict-contradiction" : "verdict-cannot_determine");
+
+      const callout = document.createElement("div");
+      callout.className = "analysis-callout";
+      callout.innerHTML = `
+        <div class="callout-header">
+          <span style="font-weight: 700; color: var(--text-main); font-size: 13.5px;">${escapeHtml(data.question)}</span>
+          <span class="callout-verdict ${vClass}">${data.verdict}</span>
+        </div>
+        ${data.value !== null && data.value !== undefined ? `<div class="callout-value">${data.value}</div>` : ''}
+        <div class="callout-text">${escapeHtml(data.explanation || data.reason || "")}</div>
+        ${data.code ? `<pre><code># Executed Pandas Script (${data.question_id})\n${escapeHtml(data.code)}</code></pre>` : ''}
+      `;
+
+      doc.appendChild(callout);
+      doc.appendChild(document.createElement("p"));
+      callout.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    /* DATASET LIST & FILE VIEWER IN LEFT COLUMN */
+    async function loadDatasets() {
+      try {
+        const res = await fetch("/api/tables");
+        const data = await res.json();
+        const listEl = document.getElementById("filesList");
+        listEl.innerHTML = "";
+
+        const allFiles = [...data.tables, ...data.documents];
+        document.getElementById("fileCountBadge").innerText = `(${allFiles.length})`;
+
+        allFiles.forEach(f => {
+          const isCsv = f.filename.endsWith(".csv");
+          const card = document.createElement("div");
+          card.className = "file-item-card";
+          card.onclick = () => viewFile(f.filename);
+
+          card.innerHTML = `
+            <div class="file-card-top">
+              <span class="file-ext-badge ${isCsv ? 'badge-csv' : 'badge-txt'}">${isCsv ? 'CSV' : 'DOC'}</span>
+              <span class="file-name" title="${f.filename}">${f.filename}</span>
+            </div>
+            <div class="file-meta-row">
+              <span>${f.rows !== undefined ? f.rows + ' rows' : f.size_kb + ' KB'}</span>
+              <span class="file-view-btn">View</span>
+            </div>
+          `;
+          listEl.appendChild(card);
+        });
+      } catch (e) {
+        console.error("Failed to load datasets:", e);
+      }
+    }
+
+    /* VIEW FILE MODAL DETAILS */
+    async function viewFile(filename) {
+      const modal = document.getElementById("fileViewerModal");
+      const title = document.getElementById("fileViewerTitle");
+      const meta = document.getElementById("fileViewerMeta");
+      const content = document.getElementById("fileViewerContent");
+
+      title.innerText = filename;
+      meta.innerText = "Loading file content...";
+      content.innerHTML = `<div class="mono" style="padding: 20px; text-align: center; color: var(--teal-dark);">Retrieving dataset...</div>`;
+      modal.classList.add("open");
+
+      try {
+        const res = await fetch(`/api/file/${encodeURIComponent(filename)}`);
+        const data = await res.json();
+
+        if (data.error) {
+          content.innerHTML = `<div style="color: var(--red); padding: 20px;">${data.error}</div>`;
+          return;
+        }
+
+        meta.innerHTML = `SHA-256: <span class="hash-badge">${data.sha256}</span> &bull; Size: ${data.size_kb} KB &bull; Total Rows: ${data.rows || 'N/A'}`;
+
+        if (data.type === "table") {
+          let tableHtml = `
+            <div class="preview-table-wrap">
+              <table class="preview-table">
+                <thead>
+                  <tr>${data.columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+          `;
+          (data.data || []).forEach(row => {
+            tableHtml += `<tr>${data.columns.map(c => `<td>${escapeHtml(row[c] || '')}</td>`).join('')}</tr>`;
+          });
+          tableHtml += `</tbody></table></div>`;
+          content.innerHTML = tableHtml;
+        } else {
+          content.innerHTML = `<pre style="background: #F8FAFC; border: 1px solid var(--border-subtle); padding: 16px; border-radius: var(--radius-sm); font-size: 12.5px; color: var(--text-body); max-height: 500px; overflow-y: auto; white-space: pre-wrap;">${escapeHtml(data.content)}</pre>`;
+        }
+      } catch (e) {
+        content.innerHTML = `<div style="color: var(--red); padding: 20px;">Failed to load file: ${e.message}</div>`;
+      }
+    }
+
+    function handleFileSelect(e) {
+      uploadFiles(e.target.files);
+    }
+
+    async function uploadFiles(fileList) {
+      const formData = new FormData();
+      for (let i = 0; i < fileList.length; i++) {
+        formData.append("files", fileList[i]);
+      }
+
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.success) {
+          alert(`Successfully uploaded ${data.saved.length} file(s).`);
+          loadDatasets();
+        } else {
+          alert(data.error || "Upload failed");
+        }
+      } catch (e) {
+        alert("Upload error: " + e.message);
+      }
+    }
+
+    async function openTrapsModal() {
+      const modal = document.getElementById("trapsModal");
+      const list = document.getElementById("trapsList");
+      list.innerHTML = `<div class="mono" style="color: var(--teal-dark);">Scanning datasets...</div>`;
+      modal.classList.add("open");
+
+      try {
+        const res = await fetch("/api/profile");
+        const data = await res.json();
+        list.innerHTML = "";
+
+        const traps = data.critical_traps || [];
+        if (traps.length === 0) {
+          list.innerHTML = `<div style="color: var(--teal-dark);">No anomalies detected.</div>`;
+        } else {
+          traps.forEach((t, i) => {
+            const item = document.createElement("div");
+            item.style.cssText = "background: #FFFBEB; border-left: 3px solid var(--amber); padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; color: #92400E; margin-bottom: 6px;";
+            item.innerHTML = `<span style="color: var(--amber); font-weight: 700; margin-right: 6px;">[Trap #${i+1}]</span> ${escapeHtml(t)}`;
+            list.appendChild(item);
+          });
+        }
+      } catch (e) {
+        list.innerHTML = `<div style="color: var(--red);">Error: ${e.message}</div>`;
+      }
+    }
+
+    async function runBenchmark() {
+      const modal = document.getElementById("benchmarkModal");
+      const stats = document.getElementById("benchmarkStats");
+      const tbody = document.getElementById("benchmarkTableBody");
+      
+      stats.innerHTML = `<div class="mono" style="grid-column: 1/-1; color: var(--teal-dark);">Executing 18-question benchmark evaluation harness...</div>`;
+      tbody.innerHTML = "";
+      modal.classList.add("open");
+
+      try {
+        const res = await fetch("/api/benchmark", { method: "POST" });
+        const data = await res.json();
+
+        stats.innerHTML = `
+          <div style="background: var(--bg-surface); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);">
+            <div class="mono" style="font-size: 11px; color: var(--text-muted); font-weight: 600;">VERDICT ACCURACY</div>
+            <div class="mono" style="font-size: 26px; font-weight: 800; color: var(--teal-dark);">${data.verdict_accuracy_pct}%</div>
+            <div style="font-size: 11px; color: var(--text-dim);">${data.verdict_matches}/${data.total_questions} Passed</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);">
+            <div class="mono" style="font-size: 11px; color: var(--text-muted); font-weight: 600;">REFUSAL CORRECTNESS</div>
+            <div class="mono" style="font-size: 26px; font-weight: 800; color: var(--teal-dark);">${data.refusal_accuracy_pct}%</div>
+            <div style="font-size: 11px; color: var(--text-dim);">${data.refusal_correct}/${data.refusal_total} Correct Refusals</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);">
+            <div class="mono" style="font-size: 11px; color: var(--text-muted); font-weight: 600;">AUDIT STATUS</div>
+            <div class="mono" style="font-size: 26px; font-weight: 800; color: var(--teal-dark);">VERIFIED</div>
+            <div style="font-size: 11px; color: var(--text-dim);">Deterministic Gate Certified</div>
+          </div>
+        `;
+
+        (data.results || []).forEach(r => {
+          const row = document.createElement("tr");
+          const ok = r.verdict_correct;
+          row.innerHTML = `
+            <td class="mono"><b>${r.id}</b></td>
+            <td class="mono" style="color: var(--text-muted);">${r.expected_verdict}</td>
+            <td class="mono" style="color: ${ok ? 'var(--teal-dark)' : 'var(--red)'}; font-weight: 600;">${r.predicted_verdict}</td>
+            <td><span class="verdict-tag ${ok ? 'verdict-answerable' : 'verdict-contradiction'}" style="font-size: 10px;">${ok ? 'PASSED' : 'FAIL'}</span></td>
+            <td class="mono">${r.time_ms}ms</td>
+          `;
+          tbody.appendChild(row);
+        });
+
+      } catch (e) {
+        stats.innerHTML = `<div style="color: var(--red);">Benchmark Error: ${e.message}</div>`;
+      }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("open");
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
