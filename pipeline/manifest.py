@@ -34,6 +34,7 @@ class RunManifest:
     output_value: Optional[Any] = None
     output_hash: Optional[str] = None
     consensus_details: Optional[Dict[str, Any]] = None
+    relevant_sources: Optional[List[Dict[str, Any]]] = None
 
 class ManifestBuilder:
     """
@@ -51,7 +52,8 @@ class ManifestBuilder:
         assumptions: Optional[List[str]] = None,
         code: Optional[str] = None,
         output_value: Optional[Any] = None,
-        consensus_details: Optional[Dict[str, Any]] = None
+        consensus_details: Optional[Dict[str, Any]] = None,
+        relevant_sources: Optional[List[Dict[str, Any]]] = None
     ) -> RunManifest:
         # Compute code hash
         code_h = None
@@ -84,7 +86,8 @@ class ManifestBuilder:
             code_hash=code_h,
             output_value=output_value,
             output_hash=output_h,
-            consensus_details=consensus_details
+            consensus_details=consensus_details,
+            relevant_sources=relevant_sources
         )
 
     def save_manifest(self, manifest: RunManifest, output_file: Path) -> Path:

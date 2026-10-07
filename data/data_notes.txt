@@ -15,3 +15,11 @@ Generated: 2024-07-01
 - Only orders with status 'COMPLETED' represent finalized revenue.
 - Pending or cancelled orders should not be recognized as realized income.
 - Refunds should be matched to their corresponding order_id before applying adjustments.
+
+## Jerin's Death
+Jerin Died in 9th April 2026
+
+## Jerin's Death
+Jerin Died in 11th April 2026
+
+Jerin raj died at the age of 67

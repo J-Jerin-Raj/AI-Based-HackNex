@@ -161,6 +161,7 @@ def run_query():
             "value": pipeline_res.get("value"),
             "explanation": pipeline_res.get("explanation") or pipeline_res.get("reason", ""),
             "assumptions": pipeline_res.get("assumptions", []),
+            "sources": pipeline_res.get("sources", []),
             "code": solution_code or manifest_data.get("code", ""),
             "code_hash": manifest_data.get("code_hash"),
             "output_hash": manifest_data.get("output_hash"),

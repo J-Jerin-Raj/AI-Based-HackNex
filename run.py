@@ -26,6 +26,7 @@ from pipeline.sandbox import SandboxExecutor
 from pipeline.consensus import ConsensusChecker
 from pipeline.explain import Explainer
 from pipeline.manifest import ManifestBuilder
+from pipeline.sources import locate_data_sources
 
 def format_output(
     verdict: str,
@@ -33,7 +34,8 @@ def format_output(
     value: Any = None,
     assumptions: list = None,
     explanation: str = None,
-    manifest_path: str = None
+    manifest_path: str = None,
+    sources: list = None
 ):
     print("\n" + "=" * 70)
     print(f"VERDICT:     {verdict.upper()}")
@@ -48,6 +50,19 @@ def format_output(
         print("ASSUMPTIONS:")
         for a in assumptions:
             print(f"  * {a}")
+    if sources:
+        print("RELEVANT SOURCES & LOCATIONS:")
+        for s in sources:
+            fn = s.get("filename", "")
+            loc = s.get("location", "")
+            snip = s.get("snippet", "")
+            desc = s.get("description", "")
+            if snip:
+                print(f"  * [{fn}] {loc}: \"{snip}\"")
+            elif loc:
+                print(f"  * [{fn}] {loc} ({desc})")
+            else:
+                print(f"  * [{fn}] {desc}")
     if manifest_path:
         print(f"MANIFEST:    {manifest_path}")
     print("=" * 70 + "\n")
@@ -107,13 +122,15 @@ def process_question_pipeline(
     if _timing_on:
         perf["gate_ms"] = _ms(_t)
     if rule_verdict.is_definitive:
+        sources = locate_data_sources(question=question, tables=tables, docs=docs, verdict=rule_verdict.verdict, verdict_reason=rule_verdict.reason)
         manifest = manifest_builder.create_manifest(
             question_id=question_id,
             question=question,
             verdict=rule_verdict.verdict,
             verdict_reason=rule_verdict.reason,
             assumptions=rule_verdict.assumptions,
-            output_value=rule_verdict.expected_value
+            output_value=rule_verdict.expected_value,
+            relevant_sources=sources
         )
         manifest_path = answers_dir / f"manifest_{question_id}.json"
         _t = time.perf_counter()
@@ -128,13 +145,15 @@ def process_question_pipeline(
             reason=rule_verdict.reason,
             value=rule_verdict.expected_value,
             assumptions=rule_verdict.assumptions,
-            manifest_path=str(manifest_path)
+            manifest_path=str(manifest_path),
+            sources=sources
         )
         result = {
             "question_id": question_id,
             "verdict": rule_verdict.verdict,
             "value": rule_verdict.expected_value,
             "reason": rule_verdict.reason,
+            "sources": sources,
             "manifest_file": str(manifest_path)
         }
         if _timing_on:
@@ -179,13 +198,15 @@ def process_question_pipeline(
         if str(outcome.consensus_value).strip().upper() in ["CANNOT_DETERMINE", "NON_ANSWERABLE", "UNANSWERABLE"]:
             verdict = "cannot_determine"
             reason = "The requested entity, column, or metric does not exist in the dataset."
+            sources = locate_data_sources(question=question, tables=tables, docs=docs, code=best_code, verdict=verdict, verdict_reason=reason)
             _t = time.perf_counter()
             manifest = manifest_builder.create_manifest(
                 question_id=question_id,
                 question=question,
                 verdict=verdict,
                 verdict_reason=reason,
-                code=best_code
+                code=best_code,
+                relevant_sources=sources
             )
             manifest_path = answers_dir / f"manifest_{question_id}.json"
             manifest_builder.save_manifest(manifest, manifest_path)
@@ -197,13 +218,15 @@ def process_question_pipeline(
             format_output(
                 verdict=verdict,
                 reason=reason,
-                manifest_path=str(manifest_path)
+                manifest_path=str(manifest_path),
+                sources=sources
             )
             result = {
                 "question_id": question_id,
                 "verdict": verdict,
                 "value": None,
                 "reason": reason,
+                "sources": sources,
                 "manifest_file": str(manifest_path)
             }
             if _timing_on:
@@ -223,6 +246,7 @@ def process_question_pipeline(
             perf["explain_ms"] = _ms(_t)
             perf["llm_call_count"] += 1  # explainer call
 
+        sources = locate_data_sources(question=question, tables=tables, docs=docs, code=best_code, verdict="answerable")
         manifest = manifest_builder.create_manifest(
             question_id=question_id,
             question=question,
@@ -231,7 +255,8 @@ def process_question_pipeline(
             assumptions=["Deduplicated records and parsed currency formatting"],
             code=best_code,
             output_value=outcome.consensus_value,
-            consensus_details={"status": outcome.status, "runs": outcome.total_runs}
+            consensus_details={"status": outcome.status, "runs": outcome.total_runs},
+            relevant_sources=sources
         )
         manifest_path = answers_dir / f"manifest_{question_id}.json"
         _t = time.perf_counter()
@@ -246,13 +271,15 @@ def process_question_pipeline(
             value=outcome.consensus_value,
             explanation=explanation,
             assumptions=["Deduplicated records and cleaned currency formats"],
-            manifest_path=str(manifest_path)
+            manifest_path=str(manifest_path),
+            sources=sources
         )
         result = {
             "question_id": question_id,
             "verdict": "answerable",
             "value": outcome.consensus_value,
             "explanation": explanation,
+            "sources": sources,
             "manifest_file": str(manifest_path)
         }
         if _timing_on:
@@ -261,12 +288,14 @@ def process_question_pipeline(
     else:
         verdict = "cannot_determine_reliably"
         reason = f"Code execution in sandbox could not reach consensus ({outcome.details})."
+        sources = locate_data_sources(question=question, tables=tables, docs=docs, code=best_code, verdict=verdict, verdict_reason=reason)
         manifest = manifest_builder.create_manifest(
             question_id=question_id,
             question=question,
             verdict=verdict,
             verdict_reason=reason,
-            code=best_code
+            code=best_code,
+            relevant_sources=sources
         )
         manifest_path = answers_dir / f"manifest_{question_id}.json"
         _t = time.perf_counter()
@@ -279,13 +308,15 @@ def process_question_pipeline(
         format_output(
             verdict=verdict,
             reason=reason,
-            manifest_path=str(manifest_path)
+            manifest_path=str(manifest_path),
+            sources=sources
         )
         result = {
             "question_id": question_id,
             "verdict": verdict,
             "value": None,
             "reason": reason,
+            "sources": sources,
             "manifest_file": str(manifest_path)
         }
         if _timing_on:

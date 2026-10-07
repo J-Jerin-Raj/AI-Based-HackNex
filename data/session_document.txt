@@ -1,9 +1,7 @@
 1. Executive Summary This quantitative document compiles verifiable findings produced by the deterministic rules engine and sandboxed Pandas executions.
 
 George Washington served as president 2 times (1789-1797).
-Alexander Hamilton died when he was 60 years old.
-
-Jerin raj married at the age of 67
+Alexander Hamilton died when he was 90 years old.
 
 Money made from refun
 
