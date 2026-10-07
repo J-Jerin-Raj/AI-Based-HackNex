@@ -11,7 +11,9 @@ Supports:
 
 import sys
 import json
+import time
 import argparse
+import os
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
@@ -53,7 +55,7 @@ def format_output(
 def process_question_pipeline(
     question: str,
     question_id: str = "CLI_Q",
-    provider: str = "ollama",
+    provider: Optional[str] = None,
     model_name: Optional[str] = None,
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
@@ -65,17 +67,45 @@ def process_question_pipeline(
     answers_dir = answers_dir or Path(__file__).resolve().parent / "answers"
     answers_dir.mkdir(parents=True, exist_ok=True)
 
+    # Phase 1: per-stage timing (enabled via ENABLE_PERF_TIMING=1, default OFF)
+    _timing_on = os.environ.get("ENABLE_PERF_TIMING", "0") == "1"
+    _t0_total = time.perf_counter()
+    perf: Dict[str, Any] = {"llm_call_count": 0}
+
+    def _ms(t_start: float) -> float:
+        return round((time.perf_counter() - t_start) * 1000, 2)
+
+    def _save_perf(path: Path) -> None:
+        """Inject 'performance' key into the manifest JSON after it has been written."""
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            data["performance"] = perf
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+        except Exception:
+            pass  # Never let timing code break the audit path
+
     # 1. Load Data & Compute Cryptographic Hashes
+    _t = time.perf_counter()
     loader = DataLoader(data_dir=data_dir)
     tables, docs, file_hashes = loader.load_all()
     manifest_builder = ManifestBuilder(file_hashes)
+    if _timing_on:
+        perf["load_ms"] = _ms(_t)
 
     # 2. Profile the Dataset for Traps
+    _t = time.perf_counter()
     profiler = DataProfiler(tables, docs)
     profile = profiler.profile_all()
+    if _timing_on:
+        perf["profile_ms"] = _ms(_t)
 
     # 3. Deterministic Hard Rules Check (instant 0.01s refusal / contradiction check)
+    _t = time.perf_counter()
     rule_verdict: RuleVerdict = evaluate_hard_rules(question, profile)
+    if _timing_on:
+        perf["gate_ms"] = _ms(_t)
     if rule_verdict.is_definitive:
         manifest = manifest_builder.create_manifest(
             question_id=question_id,
@@ -86,7 +116,12 @@ def process_question_pipeline(
             output_value=rule_verdict.expected_value
         )
         manifest_path = answers_dir / f"manifest_{question_id}.json"
+        _t = time.perf_counter()
         manifest_builder.save_manifest(manifest, manifest_path)
+        if _timing_on:
+            perf["manifest_write_ms"] = _ms(_t)
+            perf["total_ms"] = _ms(_t0_total)
+            _save_perf(manifest_path)
 
         format_output(
             verdict=rule_verdict.verdict,
@@ -95,13 +130,16 @@ def process_question_pipeline(
             assumptions=rule_verdict.assumptions,
             manifest_path=str(manifest_path)
         )
-        return {
+        result = {
             "question_id": question_id,
             "verdict": rule_verdict.verdict,
             "value": rule_verdict.expected_value,
             "reason": rule_verdict.reason,
             "manifest_file": str(manifest_path)
         }
+        if _timing_on:
+            result["performance"] = perf
+        return result
 
     # If LLM execution is disabled
     if not use_llm:
@@ -109,14 +147,19 @@ def process_question_pipeline(
         return {"question_id": question_id, "verdict": "passed_rules", "value": None}
 
     # Instantiate LLM client (local or hosted)
+    _t = time.perf_counter()
     llm = get_llm_client(provider=provider, model=model_name, api_key=api_key, base_url=base_url)
+    if _timing_on:
+        perf["client_init_ms"] = _ms(_t)
 
     # 4. Code Generation & Sandbox Execution
-    print(f"[*] Question identified as answerable. Generating code using {provider} ({llm.model})...")
+    provider_name = provider or "gemini"
+    print(f"[*] Question identified as answerable. Generating code using {provider_name} ({llm.model})...")
     sandbox = SandboxExecutor()
     consensus = ConsensusChecker()
     codegen = CodeGenerator(llm_client=llm, sandbox=sandbox, consensus=consensus)
 
+    _t = time.perf_counter()
     outcome, best_code, sandbox_results = codegen.generate_and_execute_with_consensus(
         question=question,
         tables=tables,
@@ -124,16 +167,26 @@ def process_question_pipeline(
         assumptions=["Standard data cleaning, deduplication, and currency parsing applied"],
         num_candidates=num_candidates
     )
+    if _timing_on:
+        perf["codegen_total_ms"] = _ms(_t)
+        # Count LLM calls: 1 codegen + up to 2 repairs per candidate
+        for res in sandbox_results:
+            perf["llm_call_count"] += 1  # initial codegen
+        # repairs are tracked separately — add heuristic: if a candidate failed initially, count repairs
 
     if outcome.status == "agree" and outcome.consensus_value is not None:
         # 5. Micro-Prompt Explainer
         print("[*] Code executed successfully. Generating concise explanation...")
+        _t = time.perf_counter()
         explainer = Explainer(llm_client=llm)
         explanation = explainer.explain(
             question=question,
             verified_result=outcome.consensus_value,
             assumptions=["Deduplicated records and cleaned currency formats"]
         )
+        if _timing_on:
+            perf["explain_ms"] = _ms(_t)
+            perf["llm_call_count"] += 1  # explainer call
 
         manifest = manifest_builder.create_manifest(
             question_id=question_id,
@@ -146,7 +199,12 @@ def process_question_pipeline(
             consensus_details={"status": outcome.status, "runs": outcome.total_runs}
         )
         manifest_path = answers_dir / f"manifest_{question_id}.json"
+        _t = time.perf_counter()
         manifest_builder.save_manifest(manifest, manifest_path)
+        if _timing_on:
+            perf["manifest_write_ms"] = _ms(_t)
+            perf["total_ms"] = _ms(_t0_total)
+            _save_perf(manifest_path)
 
         format_output(
             verdict="answerable",
@@ -155,13 +213,16 @@ def process_question_pipeline(
             assumptions=["Deduplicated records and cleaned currency formats"],
             manifest_path=str(manifest_path)
         )
-        return {
+        result = {
             "question_id": question_id,
             "verdict": "answerable",
             "value": outcome.consensus_value,
             "explanation": explanation,
             "manifest_file": str(manifest_path)
         }
+        if _timing_on:
+            result["performance"] = perf
+        return result
     else:
         verdict = "cannot_determine_reliably"
         reason = f"Code execution in sandbox could not reach consensus ({outcome.details})."
@@ -173,20 +234,28 @@ def process_question_pipeline(
             code=best_code
         )
         manifest_path = answers_dir / f"manifest_{question_id}.json"
+        _t = time.perf_counter()
         manifest_builder.save_manifest(manifest, manifest_path)
+        if _timing_on:
+            perf["manifest_write_ms"] = _ms(_t)
+            perf["total_ms"] = _ms(_t0_total)
+            _save_perf(manifest_path)
 
         format_output(
             verdict=verdict,
             reason=reason,
             manifest_path=str(manifest_path)
         )
-        return {
+        result = {
             "question_id": question_id,
             "verdict": verdict,
             "value": None,
             "reason": reason,
             "manifest_file": str(manifest_path)
         }
+        if _timing_on:
+            result["performance"] = perf
+        return result
 
 def run_interactive_mode(
     provider: str = "ollama",
@@ -302,8 +371,8 @@ def main():
     parser.add_argument("--interactive", "-i", action="store_true", help="Launch interactive prompt shell")
     parser.add_argument("--file", "-f", help="Path to text or JSON file containing questions")
     parser.add_argument("--question-id", default="CLI_Q", help="Identifier for the question")
-    parser.add_argument("--provider", default="ollama", choices=["ollama", "openai", "groq", "deepseek", "openrouter"], help="LLM Provider (default: ollama)")
-    parser.add_argument("--model", default=None, help="Model name (e.g. qwen3:4b, qwen2.5-coder:7b, gpt-4o-mini)")
+    parser.add_argument("--provider", default=None, choices=["gemini", "ollama", "openai", "groq", "deepseek", "openrouter"], help="LLM Provider (default: gemini)")
+    parser.add_argument("--model", default=None, help="Model name (e.g. gemini-2.5-flash, qwen2.5-coder:1.5b, gpt-4o-mini)")
     parser.add_argument("--api-key", default=None, help="API key for hosted LLM providers")
     parser.add_argument("--base-url", default=None, help="Base URL for hosted LLM providers")
     parser.add_argument("--candidates", type=int, default=1, help="Number of code candidates for consensus (default: 1)")

@@ -1,7 +1,7 @@
 {
   "question_id": "CLI_Q",
-  "question": "What do the entries represent",
-  "timestamp": "2026-10-07T05:34:20.057865+00:00",
+  "question": "What is the total revenue from completed USD orders?",
+  "timestamp": "2026-10-07T08:24:20.416840+00:00",
   "environment": {
     "python_version": "3.13.7",
     "pandas_version": "2.3.3",
@@ -9,7 +9,7 @@
     "machine": "AMD64"
   },
   "input_file_hashes": {
-    "8.code-workspace": "a5006f74d5bda846cca77a982a1bce81ddcd6283bbbea9e76cf321e07f28a7f6",
+    "8.code-workspace": "b74dfc325d33507546dc8ebd94769843c9300c6c3c35dd2ae71f86d243c65842",
     "customers.csv": "b6a518f508d869546fb9d5e0710b0ecbef72c44bdd290cea4d4abc7313b735fa",
     "data_hashes.json": "16df1517d9b172617e4fb387fd5f4ca36e029fb64de06833d73a56db1750cc2c",
     "data_notes.txt": "5952fc41678242041a749c059bac09fa67f598f6878d90c8f135237fa2b7fd23",
@@ -21,8 +21,8 @@
   "verdict": "cannot_determine_reliably",
   "verdict_reason": "Code execution in sandbox could not reach consensus (Only 0/1 runs executed successfully.).",
   "assumptions": [],
-  "code": "import pandas as pd\nfrom helpers.cleaning import parse_currency_amount, clean_status, parse_date_flexible\n\n# Load the required tables\ncustomers = pd.read_csv('data/customers.csv', keep_default_na=False)\nfx_rates = pd.read_csv('data/fx_rates.csv', keep_default_na=False)\nmonthly_summary = pd.read_csv('data/monthly_summary.csv', keep_default_na=False)\norders = pd.read_csv('data/orders.csv', keep_default_na=False)\nrefunds = pd.read_csv('data/refunds.csv', keep_default_na=False)\n\n# Calculate the total revenue for each month\ntotal_revenue = (\n    orders\n    .merge(monthly_summary, on='month', how='left')\n    .merge(customers, on='customer_id', how='left')\n    .merge(fx_rates, on='currency', how='left')\n    .groupby('month')\n    .agg(\n        total_revenue_usd=('reported_revenue_usd', 'sum'),\n        total_order_count=('reported_order_count', 'sum'),\n        total_refund_amount=('refund_amount', 'sum')\n    )\n    .reset_index()\n    .assign(\n        total_revenue_usd=lambda x: x['total_revenue_usd'] * x['rate_to_usd'],\n        total_refund_amount=lambda x: x['total_refund_amount'] * x['rate_to_usd']\n    )\n    .round(2)\n)\n\n# Print the final calculated answer\nprint(total_revenue)",
-  "code_hash": "b1bc2ebff1e441a21611d146e071118bb4f37238a5cfc2fc0af0330c659dae1f",
+  "code": "import pandas as pd\nfrom helpers.cleaning import parse_currency_amount, clean_status, parse_date_flexible\n\n# Load the required tables\ncustomers = pd.read_csv('data/customers.csv', keep_default_na=False)\nfx_rates = pd.read_csv('data/fx_rates.csv', keep_default_na=False)\nmonthly_summary = pd.read_csv('data/monthly_summary.csv', keep_default_na=False)\norders = pd.read_csv('data/orders.csv', keep_default_na=False)\nrefunds = pd.read_csv('data/refunds.csv', keep_default_na=False)\n\n# Filter completed USD orders\ncompleted_usd_orders = orders[(orders['status'] == 'COMPLETED') & (orders['currency'] == 'USD')]\n\n# Calculate total revenue from completed USD orders\ntotal_revenue = completed_usd_orders['amount'].sum()\n\n# Print the final calculated answer\nprint(round(total_revenue, 2))",
+  "code_hash": "8c003dcb3ff45a5639b681b8644475f589524fa9694abe9d62d2f65f9f590cb6",
   "output_value": null,
   "output_hash": null,
   "consensus_details": null

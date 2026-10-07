@@ -495,15 +495,27 @@ python make_test_data.py
 <<<<<<< Updated upstream
 ## ⚙️ Model Provider Configuration
 
-The agent supports local offline models as well as hosted cloud APIs via standard OpenAI-compatible endpoints:
+The agent supports Google Gemini by default, as well as local offline Ollama and OpenAI-compatible hosted endpoints:
 
-### Local (Ollama - Default)
-Works out of the box with `qwen2.5-coder:1.5b` or `qwen3:4b`:
+### 1. Google Gemini (Default)
+Add your Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey) into your `.env` file:
+```env
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=AIzaSy...
+GEMINI_MODEL=gemini-2.5-flash
+```
+Then ask questions normally:
 ```bash
-python ask.py "What is the total revenue?"
+python ask.py "What is the total revenue from completed USD orders?"
 ```
 
-### Hosted High-Speed Providers (e.g. Free Groq API)
+### 2. Local Offline Fallback (Ollama)
+To run completely offline without an internet connection or API key:
+```bash
+python ask.py "What is the total revenue?" --provider ollama
+```
+
+### 3. Other Hosted Providers (Groq / OpenAI / DeepSeek)
 ```bash
 export OPENAI_API_KEY="gsk_..."
 export OPENAI_BASE_URL="https://api.groq.com/openai/v1"

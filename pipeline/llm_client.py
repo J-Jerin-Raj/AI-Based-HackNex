@@ -39,7 +39,12 @@ def _load_env_file():
 
 _load_env_file()
 
-DEFAULT_PROVIDER = os.environ.get("LLM_PROVIDER", "ollama").lower()
+DEFAULT_PROVIDER = os.environ.get("LLM_PROVIDER", "gemini").lower()
+
+DEFAULT_GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
+DEFAULT_GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+DEFAULT_GEMINI_URL = os.environ.get("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
+
 DEFAULT_OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5-coder:1.5b")
 DEFAULT_OLLAMA_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
@@ -186,7 +191,7 @@ class OllamaClient(BaseLLMClient):
 class HostedOpenAIClient(BaseLLMClient):
     """
     Client for hosted LLMs via standard OpenAI-compatible endpoints
-    (OpenAI, Groq, DeepSeek, OpenRouter, Together, vLLM).
+    (Gemini, OpenAI, Groq, DeepSeek, OpenRouter, Together, vLLM).
     """
     def __init__(
         self,
@@ -195,13 +200,37 @@ class HostedOpenAIClient(BaseLLMClient):
         base_url: Optional[str] = None,
         timeout: int = 60
     ):
-        self.model = model or DEFAULT_OPENAI_MODEL
-        self.api_key = api_key or DEFAULT_OPENAI_KEY
-        self.base_url = (base_url or DEFAULT_OPENAI_URL).rstrip("/")
+        target_url = (base_url or DEFAULT_OPENAI_URL).rstrip("/")
+        is_gemini = (
+            "generativelanguage.googleapis.com" in target_url
+            or (model and "gemini" in model.lower())
+            or (not base_url and DEFAULT_PROVIDER == "gemini")
+        )
+
+        if is_gemini:
+            self.model = model or DEFAULT_GEMINI_MODEL
+            self.api_key = api_key or DEFAULT_GEMINI_KEY or DEFAULT_OPENAI_KEY
+            self.base_url = (base_url or DEFAULT_GEMINI_URL).rstrip("/")
+        else:
+            self.model = model or DEFAULT_OPENAI_MODEL
+            self.api_key = api_key or DEFAULT_OPENAI_KEY
+            self.base_url = target_url
+
         self.timeout = timeout
 
         if not self.api_key and "localhost" not in self.base_url:
-            raise ValueError("OPENAI_API_KEY must be provided or set in environment for hosted LLMs.")
+            if is_gemini:
+                raise ValueError(
+                    "\n" + "=" * 65 + "\n"
+                    "[!] GEMINI API KEY MISSING!\n"
+                    "Please add your Gemini API key to your .env file:\n"
+                    "  GEMINI_API_KEY=AIzaSy...\n\n"
+                    "Or set it in PowerShell:\n"
+                    "  $env:GEMINI_API_KEY=\"AIzaSy...\"\n"
+                    "=" * 65 + "\n"
+                )
+            else:
+                raise ValueError("API key must be provided or set in environment for hosted LLMs.")
 
     def _headers(self) -> Dict[str, str]:
         headers = {"Content-Type": "application/json"}
@@ -277,12 +306,28 @@ def get_llm_client(
 ) -> BaseLLMClient:
     """
     Factory to instantiate the appropriate LLM client.
-    Easily toggles between 'ollama' (local) and 'openai' (hosted).
+    Supports 'gemini' (default), 'ollama' (local), and OpenAI-compatible endpoints.
     """
     prov = (provider or DEFAULT_PROVIDER).lower()
-    if prov in ["openai", "hosted", "groq", "deepseek", "together", "openrouter"]:
+    if prov in ["gemini", "google"]:
+        return HostedOpenAIClient(
+            model=model or DEFAULT_GEMINI_MODEL,
+            api_key=api_key or DEFAULT_GEMINI_KEY or DEFAULT_OPENAI_KEY,
+            base_url=base_url or DEFAULT_GEMINI_URL
+        )
+    elif prov in ["openai", "hosted", "groq", "deepseek", "together", "openrouter"]:
         return HostedOpenAIClient(model=model, api_key=api_key, base_url=base_url)
-    return OllamaClient(model=model, base_url=base_url)
+    elif prov == "ollama":
+        return OllamaClient(model=model, base_url=base_url)
+    else:
+        # Fallback based on available credentials
+        if DEFAULT_GEMINI_KEY or prov == "gemini":
+            return HostedOpenAIClient(
+                model=model or DEFAULT_GEMINI_MODEL,
+                api_key=api_key or DEFAULT_GEMINI_KEY or DEFAULT_OPENAI_KEY,
+                base_url=base_url or DEFAULT_GEMINI_URL
+            )
+        return OllamaClient(model=model, base_url=base_url)
 
 if __name__ == "__main__":
     client = get_llm_client(provider="ollama")
