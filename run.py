@@ -103,7 +103,7 @@ def process_question_pipeline(
 
     # 3. Deterministic Hard Rules Check (instant 0.01s refusal / contradiction check)
     _t = time.perf_counter()
-    rule_verdict: RuleVerdict = evaluate_hard_rules(question, profile)
+    rule_verdict: RuleVerdict = evaluate_hard_rules(question, profile, docs=docs)
     if _timing_on:
         perf["gate_ms"] = _ms(_t)
     if rule_verdict.is_definitive:
@@ -165,6 +165,7 @@ def process_question_pipeline(
         tables=tables,
         profile=profile,
         assumptions=["Standard data cleaning, deduplication, and currency parsing applied"],
+        docs=docs,
         num_candidates=num_candidates
     )
     if _timing_on:

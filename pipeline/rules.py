@@ -22,9 +22,9 @@ class RuleVerdict:
     expected_value: Any = None
     alt_values: Dict[str, Any] = field(default_factory=dict)
 
-def evaluate_hard_rules(question: str, profile: Dict[str, Any]) -> RuleVerdict:
+def evaluate_hard_rules(question: str, profile: Dict[str, Any], docs: Optional[Dict[str, str]] = None) -> RuleVerdict:
     """
-    Evaluates rule-based checks on a question given the dataset profile.
+    Evaluates rule-based checks on a question given the dataset profile and loaded documents.
     Returns RuleVerdict. If is_definitive is True, the pipeline does not need an LLM.
     """
     q_lower = question.lower().strip()
@@ -72,11 +72,15 @@ def evaluate_hard_rules(question: str, profile: Dict[str, Any]) -> RuleVerdict:
         "salary", "payroll", "headcount", "sports", "game score"
     ]
     if any(k in q_lower for k in out_of_scope_terms):
-        return RuleVerdict(
-            is_definitive=True,
-            verdict="cannot_determine",
-            reason="The dataset consists of commercial e-commerce retail transactions (orders, customers, refunds, fx rates). It contains no records, tables, or columns regarding political figures, governmental roles, or the requested topic."
-        )
+        # Check if the term or entity is explicitly documented in loaded documents
+        doc_text_combined = " ".join(docs.values()).lower() if docs else ""
+        matched_in_doc = any(k in q_lower and k in doc_text_combined for k in out_of_scope_terms)
+        if not matched_in_doc:
+            return RuleVerdict(
+                is_definitive=True,
+                verdict="cannot_determine",
+                reason="The dataset consists of commercial e-commerce retail transactions (orders, customers, refunds, fx rates). It contains no records, tables, or columns regarding political figures, governmental roles, or the requested topic."
+            )
 
     # -------------------------------------------------------------
     # 2. Out of Range Date

@@ -4,18 +4,23 @@ Write a concise, self-contained Python script to answer the user's question usin
 TABLE SCHEMAS AND SAMPLE ROWS:
 {table_schemas}
 
+RELEVANT DOCUMENTS & CONTEXTUAL NOTES:
+{documents}
+
 USER QUESTION:
 {question}
 
 CODING GUIDELINES:
-1. Only load the table(s) required to answer the question. Load with: pd.read_csv('data/<filename>.csv', keep_default_na=False).
-2. Use verified cleaning helpers when calculating monetary or date metrics:
+1. You can access tabular data via pandas: pd.read_csv('data/<filename>.csv', keep_default_na=False).
+2. The documents listed under RELEVANT DOCUMENTS & CONTEXTUAL NOTES (and files in data/) are authoritative sources of truth and business context. If the user's question asks for a fact, date, count, entity attribute, or truth value described in these documents (e.g. data/session_document.txt or data/data_notes.txt):
+   - Derive the value directly from the document context or by reading the document file in data/ (e.g. open('data/session_document.txt', 'r', encoding='utf-8').read()).
+   - For example: if session_document.txt states "Alexander Hamilton died when he was 80 years old", your script should output: print(80) (or read data/session_document.txt with Python to extract it).
+3. Use verified cleaning helpers when calculating monetary or date metrics:
    - Currency amounts ($, €, commas, whitespace): use `parse_currency_amount(val)` from `helpers.cleaning`.
    - Status values: use `clean_status(val)` from `helpers.cleaning` (e.g. `clean_status(val) == 'COMPLETED'`).
    - Dates: use `parse_date_flexible(val, dayfirst=True)` from `helpers.cleaning`.
    - When calculating order metrics, deduplicate orders by `order_id`.
-3. Only apply filters that are directly requested by the user question. Do NOT add unnecessary filters or assumptions.
-4. The very last line of the script MUST print ONLY the final calculated answer (a rounded number, float, int, or small dict).
-5. Return ONLY executable Python code inside ```python ... ``` code fences. No markdown explanations.
-6. Out-of-scope questions: If the user's question asks about entities, historical figures, or columns completely absent from the dataset (such as political figures, presidents, or topics not in the schema), do NOT assume or print 0. Instead, print ONLY: print('CANNOT_DETERMINE')
-
+4. Only apply filters that are directly requested by the user question. Do NOT add unnecessary filters or assumptions.
+5. The very last line of the script MUST print ONLY the final calculated answer (a rounded number, float, int, string, or small dict).
+6. Return ONLY executable Python code inside ```python ... ``` code fences. No markdown explanations.
+7. Out-of-scope / Unanswerable questions: If the user's question asks about entities, figures, or metrics completely absent from both the tabular data and the documents (such as entities never mentioned anywhere in tables or documents), do NOT guess, extrapolate, or print 0. Instead, print ONLY: print('CANNOT_DETERMINE')

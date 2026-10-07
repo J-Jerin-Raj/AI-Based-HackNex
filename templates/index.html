@@ -1106,7 +1106,7 @@
             <span>•</span>
             <span id="docTimestamp">OCTOBER 2026</span>
             <span>•</span>
-            <span style="color: var(--teal-dark); font-weight: 600;">STATUS: VERIFIED (18/18 BENCHMARK)</span>
+            <span id="docSaveStatus" style="color: var(--teal-dark); font-weight: 600;">AUTO-SYNC ACTIVE</span>
           </div>
 
           <div id="editableDoc" class="doc-content-editable" contenteditable="true" spellcheck="false">
@@ -1242,17 +1242,76 @@
   <!-- JAVASCRIPT APP LOGIC -->
   <script>
     let latestResult = null;
+    let docSaveTimeout = null;
 
     window.addEventListener("DOMContentLoaded", () => {
       loadModels();
       loadDatasets();
-      
+      loadDocument();
+
+      const docEl = document.getElementById("editableDoc");
+      docEl.addEventListener("input", () => {
+        const statusEl = document.getElementById("docSaveStatus");
+        if (statusEl) {
+          statusEl.innerText = "SAVING...";
+          statusEl.style.color = "var(--text-muted)";
+        }
+        clearTimeout(docSaveTimeout);
+        docSaveTimeout = setTimeout(saveDocumentNow, 400);
+      });
+
       document.getElementById("questionInput").addEventListener("keydown", (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
           submitQuery();
         }
       });
     });
+
+    async function loadDocument() {
+      try {
+        const res = await fetch("/api/document");
+        const data = await res.json();
+        if (data.exists && data.content && data.content.trim()) {
+          const lines = data.content.split(/\n\n+/);
+          const html = lines.map(p => {
+            const trimmed = p.trim();
+            if (/^[0-9]+\.\s+[A-Z]/.test(trimmed)) {
+              return `<h2>${escapeHtml(trimmed)}</h2>`;
+            }
+            return `<p>${escapeHtml(trimmed).replace(/\n/g, "<br>")}</p>`;
+          }).join("");
+          document.getElementById("editableDoc").innerHTML = html;
+        }
+      } catch (e) {
+        console.error("Failed to load document:", e);
+      }
+    }
+
+    async function saveDocumentNow() {
+      const docEl = document.getElementById("editableDoc");
+      const statusEl = document.getElementById("docSaveStatus");
+      const content = docEl.innerText.trim();
+      try {
+        const res = await fetch("/api/document/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: content })
+        });
+        const d = await res.json();
+        if (d.success) {
+          if (statusEl) {
+            statusEl.innerText = "SAVED (" + d.updated_at + ")";
+            statusEl.style.color = "var(--teal-dark)";
+          }
+          loadDatasets();
+        }
+      } catch (e) {
+        if (statusEl) {
+          statusEl.innerText = "SYNC FAILED";
+          statusEl.style.color = "var(--red)";
+        }
+      }
+    }
 
     function execCmd(command, value = null) {
       document.execCommand(command, false, value);
@@ -1267,6 +1326,7 @@
     function clearDocument() {
       if (confirm("Clear current document draft?")) {
         document.getElementById("editableDoc").innerHTML = "<p>Draft cleared. Ready for your notes.</p>";
+        saveDocumentNow();
       }
     }
 
@@ -1474,6 +1534,7 @@
       doc.appendChild(callout);
       doc.appendChild(document.createElement("p"));
       callout.scrollIntoView({ behavior: "smooth", block: "center" });
+      saveDocumentNow();
     }
 
     /* DATASET LIST & FILE VIEWER IN LEFT COLUMN */

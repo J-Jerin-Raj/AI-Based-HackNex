@@ -47,20 +47,36 @@ class CodeGenerator:
         flags = profile.get("critical_traps_detected", [])
         return "\n".join(f"- {f}" for f in flags[:6]) if flags else "Data is standard."
 
+    def format_docs_for_codegen(self, docs: Optional[Dict[str, str]] = None) -> str:
+        if not docs:
+            return "No external document notes."
+        parts = []
+        for name, text in docs.items():
+            if not text.strip():
+                continue
+            snippet = text.strip()
+            if len(snippet) > 4000:
+                snippet = snippet[:4000] + "\n...[truncated]"
+            parts.append(f"--- Document File: {name} ---\n{snippet}\n")
+        return "\n".join(parts) if parts else "No external document notes."
+
     def generate_single_script(
         self,
         question: str,
         table_schemas_text: str,
         profile_text: str,
         assumptions: List[str],
+        docs_text: str = "",
         temperature: float = 0.1,
         seed: int = 42
     ) -> str:
         """Generates one candidate Python script."""
         assumptions_str = "\n".join(f"- {a}" for a in assumptions) if assumptions else "None"
+        documents_str = docs_text.strip() if (docs_text and docs_text.strip()) else "No external document notes."
         prompt = self.codegen_prompt_tmpl.format(
             question=question,
             table_schemas=table_schemas_text,
+            documents=documents_str,
             data_profile=profile_text,
             assumptions=assumptions_str
         )
@@ -127,10 +143,12 @@ class CodeGenerator:
         tables: Dict[str, pd.DataFrame],
         profile: Dict[str, Any],
         assumptions: List[str],
+        docs: Optional[Dict[str, str]] = None,
         num_candidates: int = 1,
         max_repairs_per_script: int = 2
     ) -> Tuple[ConsensusOutcome, str, List[SandboxResult]]:
         schemas_text = self.format_table_schemas(tables)
+        docs_text = self.format_docs_for_codegen(docs)
         profile_text = self.format_profile_for_codegen(profile)
 
         temperatures = [0.1, 0.3, 0.5][:num_candidates]
@@ -148,6 +166,7 @@ class CodeGenerator:
                 table_schemas_text=schemas_text,
                 profile_text=profile_text,
                 assumptions=assumptions,
+                docs_text=docs_text,
                 temperature=temp,
                 seed=seed
             )

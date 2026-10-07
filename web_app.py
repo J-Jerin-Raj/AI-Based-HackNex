@@ -115,9 +115,9 @@ def run_query():
     # Unique question ID for web trace
     qid = f"WEB_{uuid.uuid4().hex[:8].upper()}"
 
-    # Optional: Treat active document canvas as an authoritative source document
-    doc_context = (data.get("document_context") or "").strip()
-    if doc_context:
+    # Synchronously persist active document canvas as an authoritative source document
+    doc_context = data.get("document_context")
+    if doc_context is not None:
         try:
             (DATA_DIR / "session_document.txt").write_text(doc_context, encoding="utf-8")
         except Exception:
@@ -319,12 +319,47 @@ def run_benchmark():
             "refusal_accuracy_pct": report["refusal_accuracy_pct"],
             "total_questions": report["total_questions"],
             "verdict_matches": report["verdict_matches"],
-            "refusal_correct": report["refusal_correct"],
             "refusal_total": report["refusal_total"],
             "results": report["results"]
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/api/document", methods=["GET"])
+def get_document():
+    """Retrieves current content and hash of session_document.txt."""
+    doc_path = DATA_DIR / "session_document.txt"
+    if doc_path.exists():
+        try:
+            content = doc_path.read_text(encoding="utf-8")
+            h = compute_file_sha256(doc_path)
+            return jsonify({
+                "exists": True,
+                "content": content,
+                "sha256": h,
+                "size_kb": round(doc_path.stat().st_size / 1024, 2)
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    return jsonify({"exists": False, "content": "", "sha256": "", "size_kb": 0})
+
+@app.route("/api/document/save", methods=["POST"])
+def save_document():
+    """Real-time auto-save endpoint for editable document canvas."""
+    data = request.get_json(force=True) or {}
+    content = data.get("content", "")
+    try:
+        doc_path = DATA_DIR / "session_document.txt"
+        doc_path.write_text(content, encoding="utf-8")
+        h = compute_file_sha256(doc_path)
+        return jsonify({
+            "success": True,
+            "sha256": h,
+            "size_kb": round(doc_path.stat().st_size / 1024, 2),
+            "updated_at": time.strftime("%H:%M:%S")
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
