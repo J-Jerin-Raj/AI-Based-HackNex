@@ -115,6 +115,14 @@ def run_query():
     # Unique question ID for web trace
     qid = f"WEB_{uuid.uuid4().hex[:8].upper()}"
 
+    # Optional: Treat active document canvas as an authoritative source document
+    doc_context = (data.get("document_context") or "").strip()
+    if doc_context:
+        try:
+            (DATA_DIR / "session_document.txt").write_text(doc_context, encoding="utf-8")
+        except Exception:
+            pass
+
     # Enable timing
     os.environ["ENABLE_PERF_TIMING"] = "1"
     start_time = time.perf_counter()

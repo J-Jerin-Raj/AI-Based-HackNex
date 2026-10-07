@@ -64,6 +64,20 @@ def evaluate_hard_rules(question: str, profile: Dict[str, Any]) -> RuleVerdict:
             reason="Transactional logs contain event records but lack causal, attribution, or explanatory data."
         )
 
+    # Out-of-scope / Unrecorded domains (e.g. presidents, politics, weather, sports)
+    out_of_scope_terms = [
+        "president", "presidency", "presidential", "george washington", "washington",
+        "lincoln", "biden", "trump", "obama", "election", "politics", "congress", "senator",
+        "weather", "temperature", "forecast", "climate", "rainfall",
+        "salary", "payroll", "headcount", "sports", "game score"
+    ]
+    if any(k in q_lower for k in out_of_scope_terms):
+        return RuleVerdict(
+            is_definitive=True,
+            verdict="cannot_determine",
+            reason="The dataset consists of commercial e-commerce retail transactions (orders, customers, refunds, fx rates). It contains no records, tables, or columns regarding political figures, governmental roles, or the requested topic."
+        )
+
     # -------------------------------------------------------------
     # 2. Out of Range Date
     # -------------------------------------------------------------

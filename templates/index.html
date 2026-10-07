@@ -1346,10 +1346,11 @@
       stream.prepend(thinkingCard);
 
       try {
+        const docContext = document.getElementById("editableDoc").innerText.trim();
         const res = await fetch("/api/query", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: q, model: model })
+          body: JSON.stringify({ question: q, model: model, document_context: docContext })
         });
         const data = await res.json();
 
@@ -1359,6 +1360,7 @@
 
         latestResult = data;
         renderResultCard(thinkingCard, data);
+        loadDatasets();
 
       } catch (err) {
         thinkingCard.innerHTML = `

@@ -17,3 +17,5 @@ CODING GUIDELINES:
 3. Only apply filters that are directly requested by the user question. Do NOT add unnecessary filters or assumptions.
 4. The very last line of the script MUST print ONLY the final calculated answer (a rounded number, float, int, or small dict).
 5. Return ONLY executable Python code inside ```python ... ``` code fences. No markdown explanations.
+6. Out-of-scope questions: If the user's question asks about entities, historical figures, or columns completely absent from the dataset (such as political figures, presidents, or topics not in the schema), do NOT assume or print 0. Instead, print ONLY: print('CANNOT_DETERMINE')
+

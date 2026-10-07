@@ -1,0 +1,15 @@
+1. Executive Summary
+
+This quantitative document compiles verifiable findings produced by the deterministic rules engine and sandboxed Pandas executions. All calculations are executed exclusively within a restricted Python subprocess and validated against cryptographic SHA-256 manifests.
+
+Alexander Hamilton died when he was 80 years old
+
+2. Key Quantitative Findings
+
+Query the assistant on the right panel, then click Insert Analysis to embed verified metrics with their code traces directly into this report.
+
+"Rule: The LLM never computes numbers. Numbers are derived from deterministic code executed against verified data hashes."
+3. Identified Data Anomalies & Discrepancies
+orders.csv: Contains 3 duplicate rows requiring deterministic deduplication.
+Currency Traps: Multiple rows present currency symbol conflicts (e.g. EUR symbols marked as USD).
+Reconciliation Mismatch: May 2024 monthly_summary exhibits a 15% discrepancy compared to raw order transactions.

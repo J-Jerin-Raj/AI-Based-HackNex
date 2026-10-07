@@ -175,6 +175,40 @@ def process_question_pipeline(
         # repairs are tracked separately — add heuristic: if a candidate failed initially, count repairs
 
     if outcome.status == "agree" and outcome.consensus_value is not None:
+        if str(outcome.consensus_value).strip().upper() in ["CANNOT_DETERMINE", "NON_ANSWERABLE", "UNANSWERABLE"]:
+            verdict = "cannot_determine"
+            reason = "The requested entity, column, or metric does not exist in the dataset."
+            _t = time.perf_counter()
+            manifest = manifest_builder.create_manifest(
+                question_id=question_id,
+                question=question,
+                verdict=verdict,
+                verdict_reason=reason,
+                code=best_code
+            )
+            manifest_path = answers_dir / f"manifest_{question_id}.json"
+            manifest_builder.save_manifest(manifest, manifest_path)
+            if _timing_on:
+                perf["manifest_write_ms"] = _ms(_t)
+                perf["total_ms"] = _ms(_t0_total)
+                _save_perf(manifest_path)
+
+            format_output(
+                verdict=verdict,
+                reason=reason,
+                manifest_path=str(manifest_path)
+            )
+            result = {
+                "question_id": question_id,
+                "verdict": verdict,
+                "value": None,
+                "reason": reason,
+                "manifest_file": str(manifest_path)
+            }
+            if _timing_on:
+                result["performance"] = perf
+            return result
+
         # 5. Micro-Prompt Explainer
         print("[*] Code executed successfully. Generating concise explanation...")
         _t = time.perf_counter()

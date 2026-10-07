@@ -18,6 +18,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 import requests
+import time
 
 def _load_env_file():
     """Load variables from .env if present into os.environ."""
@@ -218,6 +219,7 @@ class HostedOpenAIClient(BaseLLMClient):
             self.base_url = target_url
 
         self.timeout = timeout
+        self.session = requests.Session()
 
         if not self.api_key and "localhost" not in self.base_url:
             if is_gemini:
@@ -261,15 +263,42 @@ class HostedOpenAIClient(BaseLLMClient):
         if seed is not None and not getattr(self, "is_gemini", False):
             payload["seed"] = seed
 
-        resp = requests.post(
-            f"{self.base_url}/chat/completions",
-            headers=self._headers(),
-            json=payload,
-            timeout=self.timeout
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        return data["choices"][0]["message"]["content"].strip()
+        max_retries = 3
+        backoff_delays = [1.5, 3.0, 6.0]
+
+        for attempt in range(max_retries):
+            try:
+                resp = self.session.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=self._headers(),
+                    json=payload,
+                    timeout=self.timeout
+                )
+                if resp.status_code in [503, 502, 504, 429]:
+                    if attempt < max_retries - 1:
+                        sleep_s = backoff_delays[attempt]
+                        print(f"[*] API returned HTTP {resp.status_code} (Service Busy). Retrying in {sleep_s}s (attempt {attempt+1}/{max_retries})...")
+                        time.sleep(sleep_s)
+                        continue
+                resp.raise_for_status()
+                data = resp.json()
+                return data["choices"][0]["message"]["content"].strip()
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1:
+                    sleep_s = backoff_delays[attempt]
+                    print(f"[*] API connection warning: {e}. Retrying in {sleep_s}s (attempt {attempt+1}/{max_retries})...")
+                    time.sleep(sleep_s)
+                    continue
+                # If all retries exhausted, check if local Ollama is available as fallback
+                print(f"[!] Hosted API failed after {max_retries} attempts: {e}")
+                try:
+                    fallback = OllamaClient()
+                    if fallback.is_available():
+                        print("[*] Automatically falling back to local Ollama...")
+                        return fallback.generate(prompt=prompt, system=system, temperature=temperature)
+                except Exception:
+                    pass
+                raise e
 
     def generate_json(
         self,
@@ -289,15 +318,32 @@ class HostedOpenAIClient(BaseLLMClient):
             "response_format": {"type": "json_object"}
         }
 
-        resp = requests.post(
-            f"{self.base_url}/chat/completions",
-            headers=self._headers(),
-            json=payload,
-            timeout=self.timeout
-        )
-        resp.raise_for_status()
-        raw = resp.json()["choices"][0]["message"]["content"].strip()
-        return json.loads(raw)
+        max_retries = 3
+        backoff_delays = [1.5, 3.0, 6.0]
+
+        for attempt in range(max_retries):
+            try:
+                resp = self.session.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=self._headers(),
+                    json=payload,
+                    timeout=self.timeout
+                )
+                if resp.status_code in [503, 502, 504, 429]:
+                    if attempt < max_retries - 1:
+                        sleep_s = backoff_delays[attempt]
+                        print(f"[*] API returned HTTP {resp.status_code}. Retrying in {sleep_s}s (attempt {attempt+1}/{max_retries})...")
+                        time.sleep(sleep_s)
+                        continue
+                resp.raise_for_status()
+                raw = resp.json()["choices"][0]["message"]["content"].strip()
+                return json.loads(raw)
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1:
+                    sleep_s = backoff_delays[attempt]
+                    time.sleep(sleep_s)
+                    continue
+                raise e
 
 def get_llm_client(
     provider: Optional[str] = None,
