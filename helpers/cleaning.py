@@ -65,14 +65,21 @@ def parse_date_flexible(val: Any, dayfirst: bool = True) -> Optional[datetime]:
     """
     if val is None or pd.isna(val):
         return None
+    if isinstance(val, datetime):
+        return val
+    if isinstance(val, pd.Timestamp):
+        return val.to_pydatetime()
     s = str(val).strip()
     if not s:
         return None
 
-    # Try ISO YYYY-MM-DD first
-    if re.match(r"^\d{4}-\d{1,2}-\d{1,2}$", s):
+    # Handle ISO YYYY-MM-DD (including possible timestamp suffixes)
+    iso_match = re.match(r"^(\d{4})-(\d{1,2})-(\d{1,2})", s)
+    if iso_match:
         try:
-            return datetime.strptime(s, "%Y-%m-%d")
+            return datetime(int(iso_match.group(1)), int(iso_match.group(2)), int(iso_match.group(3)))
+        except ValueError:
+            pass
         except ValueError:
             pass
 

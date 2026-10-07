@@ -15,11 +15,32 @@ or environment variables:
 import os
 import re
 import json
+from pathlib import Path
 from typing import Any, Dict, Optional, Union
 import requests
 
+def _load_env_file():
+    """Load variables from .env if present into os.environ."""
+    env_path = Path(__file__).resolve().parent.parent / ".env"
+    if env_path.exists():
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip("'\"")
+                    if k and k not in os.environ:
+                        os.environ[k] = v
+        except Exception:
+            pass
+
+_load_env_file()
+
 DEFAULT_PROVIDER = os.environ.get("LLM_PROVIDER", "ollama").lower()
-DEFAULT_OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3:4b")
+DEFAULT_OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5-coder:1.5b")
 DEFAULT_OLLAMA_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
 DEFAULT_OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
@@ -50,17 +71,24 @@ class BaseLLMClient:
     def extract_python_code(response_text: str) -> str:
         """
         Extracts executable Python code from markdown code fences (```python ... ```)
-        or raw script text. Strips leading language tags.
+        or raw script text. Strips leading language tags and reasoning blocks (<think>).
         """
         if not response_text:
             return ""
 
+        # Remove chain-of-thought blocks if present (qwen3, deepseek-r1, etc.)
+        cleaned = re.sub(r"<think>[\s\S]*?</think>", "", response_text, flags=re.DOTALL)
+        if "<think>" in cleaned and "</think>" not in cleaned:
+            cleaned = re.sub(r"<think>[\s\S]*", "", cleaned, flags=re.DOTALL)
+
+        target = cleaned.strip() if cleaned.strip() else response_text.strip()
+
         pattern = r"```(?:python)?\s*(.*?)(?:```|$)"
-        match = re.search(pattern, response_text, re.DOTALL | re.IGNORECASE)
+        match = re.search(pattern, target, re.DOTALL | re.IGNORECASE)
         if match:
             code = match.group(1).strip()
         else:
-            code = response_text.strip()
+            code = target.strip()
 
         code = re.sub(r"^```(?:python)?", "", code, flags=re.IGNORECASE).strip()
         code = re.sub(r"```$", "", code).strip()

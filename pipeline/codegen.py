@@ -71,7 +71,32 @@ class CodeGenerator:
             temperature=temperature,
             seed=seed
         )
-        return self.llm.extract_python_code(response)
+        raw_code = self.llm.extract_python_code(response)
+        return self.normalize_script_code(raw_code)
+
+    def normalize_script_code(self, code: str) -> str:
+        """Ensures essential imports and a final print() call exist."""
+        if not code or not code.strip():
+            return code
+
+        # Ensure pandas import
+        if "pandas" not in code and ("pd." in code or "read_csv" in code):
+            code = "import pandas as pd\n" + code
+
+        # Ensure cleaning helpers are imported if used
+        cleaning_funcs = ["parse_currency_amount", "clean_status", "parse_date_flexible", "extract_currency_symbol"]
+        used_funcs = [fn for fn in cleaning_funcs if fn in code]
+        if used_funcs and "helpers.cleaning" not in code:
+            code = f"from helpers.cleaning import {', '.join(used_funcs)}\n" + code
+
+        # Ensure output is printed
+        if "print(" not in code:
+            assignments = re.findall(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=", code, re.MULTILINE)
+            if assignments:
+                last_var = assignments[-1]
+                code = code + f"\nprint({last_var})\n"
+
+        return code
 
     def repair_script(
         self,
@@ -93,7 +118,8 @@ class CodeGenerator:
             system="You are a code debugging assistant. Return ONLY corrected Python code inside ```python ``` block. No conversational text.",
             temperature=0.1
         )
-        return self.llm.extract_python_code(response)
+        raw_code = self.llm.extract_python_code(response)
+        return self.normalize_script_code(raw_code)
 
     def generate_and_execute_with_consensus(
         self,
