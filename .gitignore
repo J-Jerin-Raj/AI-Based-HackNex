@@ -1,11 +1,27 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-.pytest_cache/
-.env
+
+# Virtual environments
+venv/
 .venv/
 env/
-venv/
-*.log
-*.code-workspace
+ENV/
+
+# Environment variables
+.env
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Scratch and debug files
 scratch/
